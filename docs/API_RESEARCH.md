@@ -10,7 +10,7 @@
 | **OpenRouteService** | ✅ Free Tier | API Key | ⚠️ nur Rad allgemein | ❌ | ✅ | Gering |
 | **BRouter** | ✅ Self-hosted | Keine | ✅ MTB-Profile | ❌ | ✅ | Mittel |
 | **DWD Wetter** | ✅ OpenData | Keine | ❌ | ✅ | ❌ | Gering |
-| **GPS-Tour.info** | ❌ Keine API | — | ✅ 150k Tracks | ❌ | ❌ | Nicht machbar |
+| **GPS-Tour.info** | ⚠️ SearXNG+Scraping | Login (GPX) | ✅ 150k Tracks | ❌ | ❌ | Mittel |
 | **Trailforks** | ❌ Keine API | — | ✅ | ✅ | ❌ | Nicht machbar |
 | **AllTrails** | ❌ Keine API | — | ✅ | ⚠️ | ❌ | Nicht machbar |
 
@@ -197,13 +197,63 @@ Bereits in NanoClaw MEMORY als Pending Topic:
 
 ## 7. GPS-Tour.info
 
-### Status: ❌ Keine API
+### Status: ⚠️ Keine API — aber über SearXNG + Scraping nutzbar
 
-- 150.000+ GPS-Tracks (Europa, v.a. DACH)
-- Kein programmatischer Zugang
-- GPX-Download nur für registrierte Mitglieder über Web-UI
-- Kontakt: kontakt@gps-tour.info (API-Anfrage möglich)
-- **Empfehlung:** Komoot als Alternative nutzen
+150.000+ GPS-Tracks (Europa, v.a. DACH). Kein offizielles API, aber:
+
+### Zugriffswege
+
+| Was | Methode | Auth |
+|-----|---------|------|
+| **Tour-Suche** | SearXNG (`site:gps-tour.info mountainbike Erlangen`) | Keine |
+| **Tour-Metadaten** | Detail-Seite scrapen (`/de/touren/detail.{ID}.html`) | Keine |
+| **GPX-Download** | Download-Seite (`/de/touren/download.{ID}.html`) | Login (Cookie) |
+
+### Verfügbare Daten (ohne Login)
+
+Aus SearXNG-Suchergebnissen:
+- Titel, Kategorie (Mountainbike/Rennrad/Wandern)
+- Länge (km), Höhenmeter (m)
+- Region (Land, Bundesland, Ort, Gebiet)
+- Tour-ID (für Detail-Link)
+
+Aus Detail-Seite (HTML scraping):
+- Beschreibungstext
+- Höhenprofil (min/max Höhe)
+- Download-Zähler (Popularität)
+- Bewertungen
+- Schwierigkeitshinweise
+
+### GPX-Download (mit Login)
+
+Erfordert Session-Cookie via Login:
+```
+POST /de/login.html
+  username=...&password=...&redx_autologin=1
+→ Session-Cookie
+
+GET /de/touren/download.{ID}.html
+→ GPX-Datei
+```
+
+### Scraping-Etikette
+
+⚠️ GPS-Tour.info ist ein Community-Projekt — respektvolles Scraping ist Pflicht:
+
+- **Rate Limiting:** Min. 3-5 Sekunden zwischen Requests
+- **Randomisierung:** ±1-2s Jitter auf Wait-Times
+- **User-Agent:** Ehrlicher UA mit Kontakt-Info
+- **Caching:** Einmal geladene Tour-Daten lokal cachen (SQLite)
+- **Kein Bulk-Download:** Nur on-demand wenn User konkret fragt
+- **robots.txt beachten:** Vor Implementierung prüfen
+
+### Geplante MCP-Tools
+
+| Tool | Funktion | Auth |
+|------|----------|------|
+| `search_gpstour` | SearXNG-basierte Tour-Suche | Keine |
+| `get_gpstour_details` | Metadaten von Detail-Seite scrapen | Keine |
+| `download_gpstour_gpx` | GPX via Login-Session herunterladen | Login |
 
 ---
 

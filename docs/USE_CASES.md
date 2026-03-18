@@ -31,7 +31,17 @@
 | Schwierigkeitsfilter | `find_trails` | "Zeig mir S2+ Trails bei Erlangen" |
 | Trail-Katalog Region | `find_trails` | "Alle MTB-Trails in 20km Umkreis" |
 
-## 4. Wetter-basierte Empfehlungen
+## 4. GPS-Tour.info Tour-Suche
+
+| Use Case | Tool | Beispiel |
+|----------|------|---------|
+| Tour-Suche nach Region | `search_gpstour` | "Finde MTB-Touren auf gps-tour.info bei Erlangen" |
+| Tour-Details abrufen | `get_gpstour_details` | "Zeig mir Details zur Tour 43168" |
+| GPX herunterladen | `download_gpstour_gpx` | "Lade die SingleTrails Erlangen als GPX" |
+| GPX per WhatsApp | `download_gpstour_gpx` + `send_file` | "Schick mir die GPX-Datei" |
+| Beliebte Touren | `search_gpstour` + Downloads-Sortierung | "Was sind die beliebtesten MTB-Touren in der Fränkischen Schweiz?" |
+
+## 5. Wetter-basierte Empfehlungen
 
 | Use Case | Tool-Kombination | Beispiel |
 |----------|-----------------|---------|
