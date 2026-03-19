@@ -1,0 +1,25 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API",
+  "osm3s": {
+    "timestamp_osm_base": "2025-07-15T12:00:00Z"
+  },
+  "elements": [
+    {
+      "type": "way",
+      "id": 12345678,
+      "tags": {
+        "name": "Tiergarten Singletrail",
+        "highway": "path",
+        "mtb:scale": "2",
+        "surface": "ground"
+      },
+      "geometry": [
+        {"lat": 49.5960, "lon": 11.0040},
+        {"lat": 49.5965, "lon": 11.0045},
+        {"lat": 49.5970, "lon": 11.0050},
+        {"lat": 49.5975, "lon": 11.0055}
+      ]
+    }
+  ]
+}

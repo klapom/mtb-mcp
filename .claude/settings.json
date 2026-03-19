@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(poetry *)",
+      "Bash(pytest *)",
+      "Bash(make *)",
+      "Bash(docker compose *)",
+      "Bash(git *)",
+      "Bash(python -m mtb_mcp*)",
+      "Bash(ruff *)",
+      "Bash(mypy *)"
+    ]
+  }
+}

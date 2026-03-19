@@ -1,0 +1,41 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [11.0000, 49.5900, 310.0],
+          [11.0050, 49.5950, 325.0],
+          [11.0100, 49.6000, 340.0],
+          [11.0150, 49.6050, 355.0],
+          [11.0200, 49.6100, 350.0],
+          [11.0250, 49.6150, 330.0],
+          [11.0300, 49.6200, 320.0]
+        ]
+      },
+      "properties": {
+        "summary": {
+          "distance": 4200.0,
+          "duration": 1260.0
+        },
+        "segments": [
+          {
+            "distance": 4200.0,
+            "duration": 1260.0
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "query": {
+      "coordinates": [
+        [11.0, 49.59],
+        [11.03, 49.62]
+      ],
+      "profile": "cycling-mountain"
+    }
+  }
+}

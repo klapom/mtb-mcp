@@ -1,0 +1,29 @@
+[
+  {
+    "type": "latlng",
+    "data": [
+      [49.596, 11.004],
+      [49.597, 11.005],
+      [49.598, 11.006],
+      [49.599, 11.007],
+      [49.600, 11.008]
+    ],
+    "series_type": "distance",
+    "original_size": 5,
+    "resolution": "high"
+  },
+  {
+    "type": "altitude",
+    "data": [280.0, 285.0, 295.0, 310.0, 305.0],
+    "series_type": "distance",
+    "original_size": 5,
+    "resolution": "high"
+  },
+  {
+    "type": "time",
+    "data": [0, 60, 120, 180, 240],
+    "series_type": "distance",
+    "original_size": 5,
+    "resolution": "high"
+  }
+]

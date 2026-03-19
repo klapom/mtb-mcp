@@ -1,0 +1,32 @@
+[
+  {
+    "id": 88001,
+    "name": "Rathsberg Climb",
+    "distance": 1200.0,
+    "elapsed_time": 360,
+    "moving_time": 350,
+    "average_heartrate": 165.0,
+    "average_watts": 250.0,
+    "pr_rank": 1
+  },
+  {
+    "id": 88002,
+    "name": "Rathsberg Climb",
+    "distance": 1200.0,
+    "elapsed_time": 375,
+    "moving_time": 370,
+    "average_heartrate": 160.0,
+    "average_watts": 240.0,
+    "pr_rank": 2
+  },
+  {
+    "id": 88003,
+    "name": "Rathsberg Climb",
+    "distance": 1200.0,
+    "elapsed_time": 390,
+    "moving_time": 385,
+    "average_heartrate": 158.0,
+    "average_watts": 235.0,
+    "pr_rank": 3
+  }
+]

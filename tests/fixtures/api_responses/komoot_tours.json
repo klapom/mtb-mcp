@@ -1,0 +1,78 @@
+{
+  "_embedded": {
+    "tours": [
+      {
+        "id": 1001,
+        "name": "Erlangen Forest Loop",
+        "distance": 32500.0,
+        "elevation_up": 450.0,
+        "duration": 7200,
+        "difficulty": {
+          "grade": "moderate",
+          "explanation_technical": "Some technical sections"
+        },
+        "sport": "mtb",
+        "status": "public",
+        "start_point": {
+          "lat": 49.596,
+          "lng": 11.004
+        },
+        "_links": {
+          "self": {
+            "href": "https://api.komoot.de/v007/tours/1001"
+          }
+        }
+      },
+      {
+        "id": 1002,
+        "name": "Rathsberg Singletrail",
+        "distance": 18200.0,
+        "elevation_up": 280.0,
+        "duration": 4500,
+        "difficulty": {
+          "grade": "difficult",
+          "explanation_technical": "Steep singletrails"
+        },
+        "sport": "mtb",
+        "status": "public",
+        "start_point": {
+          "lat": 49.581,
+          "lng": 11.025
+        },
+        "_links": {
+          "self": {
+            "href": "https://api.komoot.de/v007/tours/1002"
+          }
+        }
+      },
+      {
+        "id": 1003,
+        "name": "Easy Canal Path",
+        "distance": 12000.0,
+        "elevation_up": 50.0,
+        "duration": 2700,
+        "difficulty": {
+          "grade": "easy",
+          "explanation_technical": "Flat gravel path"
+        },
+        "sport": "mtb",
+        "status": "public",
+        "start_point": {
+          "lat": 49.600,
+          "lng": 10.990
+        },
+        "_links": {
+          "self": {
+            "href": "https://api.komoot.de/v007/tours/1003"
+          }
+        }
+      }
+    ]
+  },
+  "page": {
+    "size": 20,
+    "totalElements": 3,
+    "totalPages": 1,
+    "number": 0
+  }
+}

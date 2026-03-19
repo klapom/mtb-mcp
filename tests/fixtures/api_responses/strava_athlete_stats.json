@@ -1,0 +1,20 @@
+{
+  "recent_ride_totals": {
+    "count": 12,
+    "distance": 485000.0,
+    "elevation_gain": 5200.0,
+    "moving_time": 64800
+  },
+  "ytd_ride_totals": {
+    "count": 85,
+    "distance": 3250000.0,
+    "elevation_gain": 38500.0,
+    "moving_time": 432000
+  },
+  "all_ride_totals": {
+    "count": 520,
+    "distance": 18500000.0,
+    "elevation_gain": 225000.0,
+    "moving_time": 2592000
+  }
+}

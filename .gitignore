@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual Environment
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing
+htmlcov/
+.coverage
+coverage.xml
+.pytest_cache/
+
+# Type Checking & Linting
+.mypy_cache/
+.ruff_cache/
+
+# Environment
+.env
+
+# Database
+*.db
+
+# Runtime Data
+data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node.js (legacy, removed)
+node_modules/
+package-lock.json

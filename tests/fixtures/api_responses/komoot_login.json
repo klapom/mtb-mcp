@@ -1,0 +1,11 @@
+{
+  "username": "123456789",
+  "email": "rider@example.com",
+  "type": "user",
+  "status": "active",
+  "_links": {
+    "self": {
+      "href": "https://api.komoot.de/v006/users/123456789"
+    }
+  }
+}

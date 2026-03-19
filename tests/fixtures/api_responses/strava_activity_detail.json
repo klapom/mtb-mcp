@@ -1,0 +1,57 @@
+{
+  "id": 12345678901,
+  "name": "Morning MTB Ride",
+  "sport_type": "MountainBikeRide",
+  "type": "Ride",
+  "distance": 32500.0,
+  "total_elevation_gain": 450.0,
+  "moving_time": 5400,
+  "elapsed_time": 6000,
+  "start_date": "2025-07-15T07:00:00Z",
+  "average_speed": 6.02,
+  "max_speed": 14.5,
+  "average_heartrate": 145.0,
+  "max_heartrate": 172.0,
+  "average_watts": 185.0,
+  "max_watts": 420.0,
+  "suffer_score": 85.0,
+  "calories": 950.0,
+  "gear_id": "b12345",
+  "start_latlng": [49.596, 11.004],
+  "description": "Great morning ride through the forest trails.",
+  "average_cadence": 78.0,
+  "average_temp": 22.0,
+  "device_name": "Garmin Edge 540",
+  "segment_efforts": [
+    {
+      "id": 98765432101,
+      "name": "Rathsberg Climb",
+      "distance": 1200.0,
+      "elapsed_time": 360,
+      "moving_time": 350,
+      "average_heartrate": 165.0,
+      "average_watts": 250.0,
+      "pr_rank": 1
+    },
+    {
+      "id": 98765432102,
+      "name": "Forest Descent",
+      "distance": 2500.0,
+      "elapsed_time": 240,
+      "moving_time": 235,
+      "average_heartrate": 130.0,
+      "average_watts": 80.0,
+      "pr_rank": null
+    },
+    {
+      "id": 98765432103,
+      "name": "Valley Sprint",
+      "distance": 800.0,
+      "elapsed_time": 90,
+      "moving_time": 88,
+      "average_heartrate": 172.0,
+      "average_watts": 320.0,
+      "pr_rank": 2
+    }
+  ]
+}

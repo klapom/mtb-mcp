@@ -1,0 +1,9 @@
+{
+  "token_type": "Bearer",
+  "access_token": "new_access_token_abc123",
+  "expires_at": 9999999999,
+  "refresh_token": "new_refresh_token_xyz789",
+  "athlete": {
+    "id": 42424242
+  }
+}

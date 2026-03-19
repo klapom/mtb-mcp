@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="mtb-mcp test fixture"
+     xmlns="http://www.topografix.com/GPX/1/1"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://www.topografix.com/GPX/1/1
+     http://www.topografix.com/GPX/1/1/gpx.xsd">
+  <metadata>
+    <name>Erlangen Test Track</name>
+    <desc>Simple test track around Erlangen for unit testing</desc>
+  </metadata>
+  <trk>
+    <name>Erlangen Rundweg</name>
+    <trkseg>
+      <!-- Schlossplatz Erlangen -->
+      <trkpt lat="49.5964" lon="11.0042">
+        <ele>280</ele>
+      </trkpt>
+      <!-- Schlossgarten -->
+      <trkpt lat="49.5980" lon="11.0050">
+        <ele>282</ele>
+      </trkpt>
+      <!-- Botanischer Garten -->
+      <trkpt lat="49.5995" lon="11.0070">
+        <ele>285</ele>
+      </trkpt>
+      <!-- Burgberg approach -->
+      <trkpt lat="49.6010" lon="11.0100">
+        <ele>310</ele>
+      </trkpt>
+      <!-- Burgberg top -->
+      <trkpt lat="49.6030" lon="11.0120">
+        <ele>340</ele>
+      </trkpt>
+      <!-- Descent towards Rathsberg -->
+      <trkpt lat="49.6050" lon="11.0150">
+        <ele>320</ele>
+      </trkpt>
+      <!-- Rathsberg area -->
+      <trkpt lat="49.6040" lon="11.0180">
+        <ele>305</ele>
+      </trkpt>
+      <!-- Back towards city -->
+      <trkpt lat="49.6010" lon="11.0150">
+        <ele>290</ele>
+      </trkpt>
+      <!-- Near Schlossgarten again -->
+      <trkpt lat="49.5980" lon="11.0080">
+        <ele>282</ele>
+      </trkpt>
+      <!-- Back to Schlossplatz -->
+      <trkpt lat="49.5964" lon="11.0042">
+        <ele>280</ele>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>

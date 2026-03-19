@@ -1,0 +1,39 @@
+{
+  "id": 1001,
+  "name": "Erlangen Forest Loop",
+  "distance": 32500.0,
+  "elevation_up": 450.0,
+  "elevation_down": 450.0,
+  "duration": 7200,
+  "description": "A beautiful loop through the forests around Erlangen. Mix of gravel paths and singletrails with moderate technical sections.",
+  "difficulty": {
+    "grade": "moderate",
+    "explanation_technical": "Some technical sections"
+  },
+  "sport": "mtb",
+  "status": "public",
+  "start_point": {
+    "lat": 49.596,
+    "lng": 11.004
+  },
+  "segments": [
+    {"type": "climb", "surface": "gravel"},
+    {"type": "descent", "surface": "singletrack"},
+    {"type": "flat", "surface": "asphalt"},
+    {"type": "climb", "surface": "dirt"}
+  ],
+  "coordinates": [
+    {"lat": 49.596, "lng": 11.004, "alt": 280.0},
+    {"lat": 49.598, "lng": 11.010, "alt": 310.0},
+    {"lat": 49.602, "lng": 11.015, "alt": 350.0},
+    {"lat": 49.600, "lng": 11.020, "alt": 320.0},
+    {"lat": 49.596, "lng": 11.004, "alt": 280.0}
+  ],
+  "downloads": 142,
+  "rating": 4.5,
+  "_links": {
+    "self": {
+      "href": "https://api.komoot.de/v007/tours/1001"
+    }
+  }
+}

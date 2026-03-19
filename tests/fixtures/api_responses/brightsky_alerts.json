@@ -1,0 +1,22 @@
+{
+  "alerts": [
+    {
+      "id": 1,
+      "event": "HEAVY THUNDERSTORM",
+      "severity": "severe",
+      "headline": "Amtliche UNWETTERWARNUNG vor SCHWEREM GEWITTER",
+      "description": "Es treten schwere Gewitter mit Starkregen, Hagel und Sturmböen auf. Dabei werden Niederschlagsmengen bis 40 l/m² in kurzer Zeit erwartet.",
+      "onset": "2025-07-15T14:00:00+00:00",
+      "expires": "2025-07-15T20:00:00+00:00"
+    },
+    {
+      "id": 2,
+      "event": "WIND GUSTS",
+      "severity": "moderate",
+      "headline": "Amtliche WARNUNG vor STURMBÖEN",
+      "description": "Es treten Sturmböen mit Geschwindigkeiten zwischen 70 km/h und 85 km/h aus westlicher Richtung auf.",
+      "onset": "2025-07-15T12:00:00+00:00",
+      "expires": "2025-07-15T18:00:00+00:00"
+    }
+  ]
+}

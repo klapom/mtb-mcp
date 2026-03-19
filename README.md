@@ -1,47 +1,71 @@
-# MTB MCP Server
+# TrailPilot MCP Server (mtb-mcp)
 
-MCP server for mountainbike & outdoor activities — integrates Strava, Komoot, trail databases, and weather-aware ride planning. Built for [NanoClaw](https://github.com/qwibitai/nanoclaw).
+> Your AI-powered MTB Copilot — weather-aware ride planning, trail conditions, bike maintenance, and more.
 
-## Use Cases
+## What is this?
 
-See [docs/USE_CASES.md](docs/USE_CASES.md) for the full use case catalog.
+A Python-based MCP (Model Context Protocol) server that acts as a comprehensive mountain biking assistant. Connects to Strava, Komoot, DWD Weather, OpenStreetMap, and more to provide intelligent riding recommendations.
 
-**Highlights:**
-- "Zeig mir meine letzten MTB-Fahrten" → Strava activity history
-- "Finde eine MTB-Tour bei Erlangen, 30-50km" → Komoot tour search
-- "Kann ich morgen biken?" → Weather + trail conditions check
-- "Wie sind die Trails am Hetzlas?" → OSM trail data + weather overlay
-- Proaktiver Samstag-Morgen-Bericht: Wetter + Tour-Empfehlung
+## Features
+
+- **38 MCP Tools** across 11 domains
+- **Multi-Source Tour Search** — Komoot + GPS-Tour.info with deduplication
+- **Weather-Aware** — DWD forecasts, rain radar, trail condition estimation
+- **Ride Score** — "Should I ride today?" (0-100) combining weather, trails, wind, daylight
+- **Bike Maintenance** — Component wear tracking with terrain/weather modifiers
+- **eBike Range** — Battery vs. elevation profile calculator
+- **Weekend Planner** — Proactive Saturday/Sunday ride recommendations
+- **Safety Timer** — Expected return time tracking
+- **Fitness Tracking** — CTL/ATL/TSB, training plans, race readiness
+- **BLE Sensors** — TyreWiz pressure, heart rate (optional)
+
+## Quick Start
+
+```bash
+# Install
+poetry install --with dev
+
+# Run
+python -m mtb_mcp
+
+# Or via mcporter
+# Add to nanoclaw/config/mcporter.json
+```
+
+## Tool Domains
+
+| Domain | Tools | Description |
+|--------|-------|-------------|
+| Strava | 7 | Activities, segments, GPX export |
+| Tour Search | 6 | Unified Komoot + GPS-Tour.info search |
+| Trail Info | 3 | OSM trail data, conditions |
+| Weather | 4 | DWD forecast, rain radar, alerts |
+| Routing | 3 | BRouter/ORS MTB routing |
+| Intelligence | 5 | Ride score, fusion, trail tagger |
+| Maintenance | 4 | Bike wear tracking |
+| Sensors | 2 | BLE heart rate, tire pressure |
+| eBike | 2 | Range calculator |
+| Safety | 2 | Return timer |
+| Fitness | 7 | CTL/ATL/TSB, training plans |
+
+## Configuration
+
+Copy `.env.template` to `.env` and fill in your API credentials.
+
+## Development
+
+```bash
+make dev          # Install + dev deps
+make test-unit    # Run tests
+make lint         # Ruff check
+make type-check   # MyPy strict
+make quality      # All checks
+make docker-up    # Start BRouter + SearXNG
+```
 
 ## Architecture
 
-```
-┌─────────────┐     ┌──────────────┐     ┌─────────────────┐
-│  NanoClaw   │────▶│   mtb-mcp    │────▶│  External APIs   │
-│  (mcporter) │     │  MCP Server  │     │                   │
-└─────────────┘     └──────────────┘     │ • Strava API v3   │
-                                          │ • Komoot v007     │
-                                          │ • OSM Overpass    │
-                                          │ • OpenRouteService│
-                                          │ • Weather (DWD)   │
-                                          └─────────────────┘
-```
-
-## Status
-
-🚧 **Planning phase** — API research complete, implementation not started.
-
-See [docs/API_RESEARCH.md](docs/API_RESEARCH.md) for detailed integration options.
-
-## Quick Start (once implemented)
-
-```bash
-npm install
-npm run build
-
-# Add to mcporter config:
-# "mtb": { "command": "node /path/to/mtb-mcp/dist/index.js" }
-```
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
 ## License
 

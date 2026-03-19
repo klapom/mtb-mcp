@@ -1,0 +1,44 @@
+{
+  "weather": [
+    {
+      "timestamp": "2025-07-15T10:00:00+00:00",
+      "temperature": 22.5,
+      "wind_speed": 12.0,
+      "wind_gust_speed": 25.0,
+      "precipitation": 0.0,
+      "precipitation_probability": 10.0,
+      "relative_humidity": 55.0,
+      "icon": "partly-cloudy-day"
+    },
+    {
+      "timestamp": "2025-07-15T11:00:00+00:00",
+      "temperature": 24.0,
+      "wind_speed": 15.0,
+      "wind_gust_speed": 30.0,
+      "precipitation": 0.0,
+      "precipitation_probability": 15.0,
+      "relative_humidity": 50.0,
+      "icon": "clear-day"
+    },
+    {
+      "timestamp": "2025-07-15T12:00:00+00:00",
+      "temperature": 25.5,
+      "wind_speed": 18.0,
+      "wind_gust_speed": 35.0,
+      "precipitation": 0.5,
+      "precipitation_probability": 40.0,
+      "relative_humidity": 65.0,
+      "icon": "rain"
+    }
+  ],
+  "sources": [
+    {
+      "id": 123,
+      "dwd_station_id": "10763",
+      "station_name": "NUERNBERG",
+      "observation_type": "forecast",
+      "lat": 49.5,
+      "lon": 11.05
+    }
+  ]
+}
