@@ -1,0 +1,1988 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>TrailPilot</title>
+<style>
+/* ========== RESET & BASE ========== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; -webkit-text-size-adjust: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: #0f0f1e;
+  color: #e0e0e0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+input, select, textarea { font-family: inherit; color: inherit; }
+a { color: inherit; text-decoration: none; }
+
+/* ========== CSS VARIABLES ========== */
+:root {
+  --bg-primary: #0f0f1e;
+  --bg-card: #1a1a2e;
+  --bg-card-hover: #1e2340;
+  --bg-input: #12122a;
+  --border-subtle: rgba(255,255,255,0.06);
+  --border-card: rgba(255,255,255,0.08);
+  --accent-green: #0f9b58;
+  --accent-green-glow: rgba(15,155,88,0.25);
+  --accent-orange: #f39c12;
+  --accent-orange-glow: rgba(243,156,18,0.25);
+  --accent-red: #e74c3c;
+  --accent-red-glow: rgba(231,76,60,0.25);
+  --accent-blue: #2196f3;
+  --accent-blue-glow: rgba(33,150,243,0.25);
+  --text-primary: #e0e0e0;
+  --text-secondary: #8892a0;
+  --text-muted: #5a6270;
+  --s0: #4caf50;
+  --s1: #2196f3;
+  --s2: #ff9800;
+  --s3: #f44336;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-pill: 50px;
+  --shadow-card: 0 2px 12px rgba(0,0,0,0.3);
+  --shadow-elevated: 0 8px 32px rgba(0,0,0,0.4);
+  --transition: 0.3s ease;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --nav-height: 64px;
+  --header-height: 56px;
+}
+
+/* ========== SCROLLBAR ========== */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+/* ========== HEADER ========== */
+.header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: var(--header-height);
+  background: rgba(15,15,30,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px;
+}
+.header-logo {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 18px; font-weight: 700; letter-spacing: -0.3px;
+}
+.header-logo svg { width: 28px; height: 28px; }
+.header-logo .logo-trail { color: #fff; }
+.header-logo .logo-pilot { color: var(--accent-green); }
+.header-actions { display: flex; gap: 8px; }
+.header-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--transition);
+  font-size: 16px;
+}
+.header-btn:hover { background: rgba(255,255,255,0.12); }
+
+/* ========== MAIN CONTENT ========== */
+.main-content {
+  padding-top: var(--header-height);
+  padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 8px);
+  min-height: 100vh; min-height: 100dvh;
+}
+
+/* ========== SCREENS ========== */
+.screen {
+  display: none;
+  padding: 16px;
+  animation: screenIn 0.3s ease;
+}
+.screen.active { display: block; }
+@keyframes screenIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ========== BOTTOM NAV ========== */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  height: calc(var(--nav-height) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  background: rgba(15,15,30,0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border-subtle);
+  display: flex; align-items: stretch;
+}
+.nav-main {
+  display: flex; flex: 1;
+}
+.nav-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 3px;
+  font-size: 10px; color: var(--text-muted);
+  transition: color var(--transition);
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  padding: 6px 0;
+}
+.nav-item .nav-icon { font-size: 20px; line-height: 1; }
+.nav-item.active { color: var(--accent-green); }
+.nav-item.active::before {
+  content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 24px; height: 2px; background: var(--accent-green); border-radius: 0 0 2px 2px;
+}
+.nav-item:active { transform: scale(0.92); }
+
+/* More menu */
+.more-menu {
+  display: none; position: fixed; bottom: calc(var(--nav-height) + var(--safe-bottom) + 4px);
+  right: 8px; z-index: 101;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-elevated);
+  padding: 8px 0;
+  min-width: 170px;
+  animation: menuIn 0.2s ease;
+}
+.more-menu.open { display: block; }
+@keyframes menuIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.more-menu-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; font-size: 14px; color: var(--text-primary);
+  transition: background var(--transition);
+  width: 100%;
+}
+.more-menu-item:hover { background: rgba(255,255,255,0.05); }
+.more-menu-item .nav-icon { font-size: 18px; width: 24px; text-align: center; }
+.more-menu-item.active { color: var(--accent-green); }
+.more-menu-backdrop {
+  display: none; position: fixed; inset: 0; z-index: 100;
+}
+.more-menu-backdrop.open { display: block; }
+
+/* ========== CARDS ========== */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow-card);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
+.card + .card { margin-top: 12px; }
+
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.card-title {
+  font-size: 13px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--text-secondary);
+}
+
+/* ========== SECTION TITLES ========== */
+.section-title {
+  font-size: 18px; font-weight: 700; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* ========== BADGES ========== */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: var(--radius-pill);
+  font-size: 11px; font-weight: 600; letter-spacing: 0.3px;
+}
+.badge-green { background: rgba(15,155,88,0.15); color: #4ade80; }
+.badge-orange { background: rgba(243,156,18,0.15); color: #fbbf24; }
+.badge-red { background: rgba(231,76,60,0.15); color: #f87171; }
+.badge-blue { background: rgba(33,150,243,0.15); color: #60a5fa; }
+.badge-gray { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+.badge-s0 { background: rgba(76,175,80,0.15); color: var(--s0); }
+.badge-s1 { background: rgba(33,150,243,0.15); color: var(--s1); }
+.badge-s2 { background: rgba(255,152,0,0.15); color: var(--s2); }
+.badge-s3 { background: rgba(244,67,54,0.15); color: var(--s3); }
+
+/* ========== BUTTONS ========== */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 20px; border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 600;
+  transition: all var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active { transform: scale(0.96); }
+.btn-primary { background: var(--accent-green); color: #fff; }
+.btn-primary:hover { background: #0db365; box-shadow: 0 0 20px var(--accent-green-glow); }
+.btn-secondary { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+.btn-secondary:hover { background: rgba(255,255,255,0.12); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-block { width: 100%; }
+.btn-icon {
+  width: 44px; height: 44px; border-radius: 50%;
+  padding: 0; font-size: 20px;
+}
+
+/* ========== PROGRESS BAR ========== */
+.progress-bar {
+  width: 100%; height: 6px; background: rgba(255,255,255,0.08);
+  border-radius: 3px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; border-radius: 3px;
+  transition: width 0.8s ease;
+}
+.progress-green { background: linear-gradient(90deg, #0f9b58, #4ade80); }
+.progress-yellow { background: linear-gradient(90deg, #f39c12, #fbbf24); }
+.progress-red { background: linear-gradient(90deg, #e74c3c, #f87171); }
+
+/* ========== CHIPS / FILTERS ========== */
+.chip-row {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.chip {
+  padding: 6px 14px; border-radius: var(--radius-pill);
+  font-size: 12px; font-weight: 600;
+  background: rgba(255,255,255,0.06); color: var(--text-secondary);
+  border: 1px solid transparent;
+  transition: all var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.chip:active { transform: scale(0.95); }
+.chip.active { background: rgba(15,155,88,0.2); color: var(--accent-green); border-color: rgba(15,155,88,0.3); }
+
+/* ========== MODALS ========== */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  align-items: flex-end; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  width: 100%; max-width: 500px; max-height: 85vh;
+  background: var(--bg-card);
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 20px 16px calc(20px + var(--safe-bottom));
+  overflow-y: auto;
+  animation: modalIn 0.3s ease;
+}
+@keyframes modalIn {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.modal-handle {
+  width: 36px; height: 4px; background: rgba(255,255,255,0.2);
+  border-radius: 2px; margin: 0 auto 16px;
+}
+.modal-title {
+  font-size: 18px; font-weight: 700; margin-bottom: 16px;
+}
+.modal .form-group { margin-bottom: 14px; }
+.modal .form-label {
+  display: block; font-size: 12px; font-weight: 600;
+  color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.modal input[type="text"],
+.modal input[type="number"],
+.modal select,
+.modal textarea {
+  width: 100%; padding: 10px 12px;
+  background: var(--bg-input); border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm); font-size: 14px; color: var(--text-primary);
+  outline: none; transition: border-color var(--transition);
+}
+.modal input:focus, .modal select:focus, .modal textarea:focus {
+  border-color: var(--accent-green);
+}
+.modal-actions {
+  display: flex; gap: 8px; margin-top: 20px;
+}
+
+/* ========== TOUR DETAIL OVERLAY ========== */
+.overlay {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: var(--bg-primary);
+  overflow-y: auto;
+  animation: overlayIn 0.3s ease;
+  padding-bottom: 40px;
+}
+.overlay.open { display: block; }
+@keyframes overlayIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.overlay-header {
+  position: sticky; top: 0; z-index: 1;
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px; background: rgba(15,15,30,0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.overlay-header h2 { font-size: 16px; font-weight: 600; flex: 1; }
+.overlay-body { padding: 16px; }
+
+/* ========== CIRCULAR GAUGE ========== */
+.circular-gauge {
+  position: relative; width: 140px; height: 140px; margin: 0 auto;
+}
+.circular-gauge svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.circular-gauge .track {
+  fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 8;
+}
+.circular-gauge .fill {
+  fill: none; stroke-width: 8; stroke-linecap: round;
+  transition: stroke-dashoffset 1s ease, stroke 0.3s ease;
+}
+.gauge-center {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.gauge-value { font-size: 36px; font-weight: 800; line-height: 1; }
+.gauge-label { font-size: 11px; color: var(--text-secondary); margin-top: 2px; font-weight: 600; }
+
+/* ========== SCROLLABLE ROW ========== */
+.scroll-row {
+  display: flex; gap: 10px; overflow-x: auto;
+  padding: 4px 0; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.scroll-row::-webkit-scrollbar { display: none; }
+
+/* ========== QUICK ACTIONS ========== */
+.quick-actions {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+}
+.quick-action {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 14px 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius);
+  transition: all var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.quick-action:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); }
+.quick-action:active { transform: scale(0.95); }
+.quick-action .qa-icon { font-size: 24px; }
+.quick-action .qa-label { font-size: 10px; font-weight: 600; color: var(--text-secondary); text-align: center; }
+
+/* ========== CONDITION DOT ========== */
+.condition-dot {
+  width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0;
+}
+.condition-dry { background: var(--accent-green); box-shadow: 0 0 6px var(--accent-green-glow); }
+.condition-damp { background: #fbbf24; box-shadow: 0 0 6px rgba(251,191,36,0.3); }
+.condition-wet { background: var(--accent-orange); box-shadow: 0 0 6px var(--accent-orange-glow); }
+.condition-muddy { background: var(--accent-red); box-shadow: 0 0 6px var(--accent-red-glow); }
+
+/* ========== SEARCH BAR ========== */
+.search-bar {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-pill);
+  padding: 8px 16px; margin-bottom: 14px;
+}
+.search-bar input {
+  flex: 1; border: none; background: none; outline: none;
+  font-size: 14px; color: var(--text-primary);
+}
+.search-bar input::placeholder { color: var(--text-muted); }
+.search-bar .search-icon { font-size: 16px; color: var(--text-muted); }
+
+/* ========== RANGE SLIDER ========== */
+.range-group {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+}
+.range-group label { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+.range-group input[type="range"] {
+  flex: 1; -webkit-appearance: none; height: 4px;
+  background: rgba(255,255,255,0.1); border-radius: 2px; outline: none;
+}
+.range-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 18px; height: 18px;
+  border-radius: 50%; background: var(--accent-green); cursor: pointer;
+  box-shadow: 0 0 8px var(--accent-green-glow);
+}
+.range-group .range-value { font-size: 13px; font-weight: 600; min-width: 40px; text-align: right; }
+
+/* ========== MAP PLACEHOLDER ========== */
+.map-placeholder {
+  background: linear-gradient(135deg, #1a2332, #162030);
+  border: 1px dashed rgba(255,255,255,0.12);
+  border-radius: var(--radius);
+  height: 180px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  color: var(--text-muted); font-size: 13px; margin-bottom: 14px;
+  position: relative; overflow: hidden;
+}
+.map-placeholder::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 30 L15 15 L30 25 L45 10 L60 20' stroke='%23ffffff08' fill='none' stroke-width='1'/%3E%3Cpath d='M0 45 L20 35 L40 42 L60 30' stroke='%23ffffff06' fill='none' stroke-width='1'/%3E%3C/svg%3E");
+  opacity: 0.5;
+}
+.map-placeholder .map-icon { font-size: 32px; z-index: 1; }
+.map-placeholder span { z-index: 1; }
+
+/* ========== WEATHER BAR CHART ========== */
+.bar-chart {
+  display: flex; align-items: flex-end; gap: 3px; height: 80px; padding-top: 8px;
+}
+.bar-chart .bar {
+  flex: 1; border-radius: 2px 2px 0 0;
+  background: linear-gradient(to top, var(--accent-blue), rgba(33,150,243,0.3));
+  min-width: 4px; transition: height 0.5s ease;
+  position: relative;
+}
+.bar-chart .bar-label {
+  position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%);
+  font-size: 8px; color: var(--text-muted); white-space: nowrap;
+}
+
+/* ========== HOURLY SCROLL ========== */
+.hourly-card {
+  flex-shrink: 0; width: 62px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 10px 6px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+}
+.hourly-card .h-time { font-size: 11px; color: var(--text-secondary); font-weight: 600; }
+.hourly-card .h-icon { font-size: 20px; }
+.hourly-card .h-temp { font-size: 14px; font-weight: 700; }
+
+/* ========== WEAR LIST ========== */
+.component-item {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.component-item:last-child { border-bottom: none; }
+.component-top {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.component-name { font-size: 14px; font-weight: 600; }
+.component-detail { font-size: 12px; color: var(--text-secondary); }
+.component-progress {
+  display: flex; align-items: center; gap: 10px;
+}
+.component-progress .progress-bar { flex: 1; }
+.component-pct { font-size: 12px; font-weight: 700; min-width: 36px; text-align: right; }
+
+/* ========== TRAINING ========== */
+.fitness-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+}
+.fitness-item {
+  text-align: center; padding: 12px;
+  background: rgba(255,255,255,0.03); border-radius: var(--radius-sm);
+  border: 1px solid var(--border-card);
+}
+.fitness-value { font-size: 24px; font-weight: 800; }
+.fitness-label { font-size: 10px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; margin-top: 2px; }
+
+/* ========== SAFETY TIMER ========== */
+.timer-display {
+  text-align: center; padding: 24px 16px;
+}
+.timer-status { font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+.timer-time { font-size: 48px; font-weight: 800; line-height: 1; }
+.timer-unit { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
+
+/* ========== TOUR CARD ========== */
+.tour-card {
+  padding: 14px; cursor: pointer;
+  transition: transform var(--transition);
+}
+.tour-card:active { transform: scale(0.98); }
+.tour-card-top {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+}
+.tour-name { font-size: 15px; font-weight: 600; line-height: 1.3; flex: 1; }
+.tour-stats {
+  display: flex; gap: 12px; margin-top: 8px;
+}
+.tour-stat {
+  display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-secondary);
+}
+.tour-stat .stat-icon { font-size: 13px; }
+.tour-source {
+  display: flex; align-items: center; gap: 6px; margin-top: 8px;
+}
+
+/* ========== TRAIL LIST ========== */
+.trail-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; cursor: pointer;
+  transition: background var(--transition);
+}
+.trail-item:hover { background: rgba(255,255,255,0.03); }
+.trail-info { flex: 1; }
+.trail-name { font-size: 14px; font-weight: 600; }
+.trail-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; display: flex; gap: 8px; align-items: center; }
+
+/* ========== WEEKEND PREVIEW ========== */
+.weekend-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.weekend-day {
+  padding: 12px; text-align: center;
+  background: rgba(255,255,255,0.03);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-card);
+}
+.weekend-day-name { font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; }
+.weekend-score { font-size: 28px; font-weight: 800; margin: 4px 0 2px; }
+.weekend-weather { font-size: 18px; }
+
+/* ========== ALERT BANNER ========== */
+.alert-banner {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 500;
+}
+.alert-banner-yellow {
+  background: rgba(243,156,18,0.12); border: 1px solid rgba(243,156,18,0.25);
+  color: #fbbf24;
+}
+.alert-banner-red {
+  background: rgba(231,76,60,0.12); border: 1px solid rgba(231,76,60,0.25);
+  color: #f87171;
+}
+.alert-banner-green {
+  background: rgba(15,155,88,0.12); border: 1px solid rgba(15,155,88,0.25);
+  color: #4ade80;
+}
+.alert-icon { font-size: 18px; flex-shrink: 0; }
+
+/* ========== eBIKE MODE TABLE ========== */
+.mode-table {
+  width: 100%; border-collapse: collapse;
+}
+.mode-table th, .mode-table td {
+  padding: 10px 12px; text-align: left; font-size: 13px;
+}
+.mode-table th {
+  font-size: 11px; color: var(--text-muted); font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.mode-table td { border-bottom: 1px solid var(--border-subtle); }
+.mode-table tr.active-mode td { color: var(--accent-green); font-weight: 600; }
+
+/* ========== RESPONSIVE ========== */
+@media (min-width: 500px) {
+  .main-content { max-width: 500px; margin: 0 auto; }
+  .bottom-nav { justify-content: center; }
+  .nav-main { max-width: 500px; }
+  .modal { border-radius: var(--radius); margin: 0 16px; }
+}
+
+/* ========== TERRAIN SELECTOR ========== */
+.terrain-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+}
+.terrain-option {
+  padding: 10px; text-align: center;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  font-size: 12px; cursor: pointer;
+  transition: all var(--transition);
+}
+.terrain-option:hover { border-color: rgba(255,255,255,0.15); }
+.terrain-option.selected { border-color: var(--accent-green); background: rgba(15,155,88,0.1); }
+.terrain-option .t-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+
+/* ========== TRAINING WEEK ========== */
+.week-plan {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center;
+}
+.week-day {
+  padding: 8px 2px; border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border-card);
+}
+.week-day.today { border-color: var(--accent-green); }
+.week-day.completed { background: rgba(15,155,88,0.12); border-color: rgba(15,155,88,0.2); }
+.week-day-label { font-size: 9px; color: var(--text-muted); font-weight: 600; }
+.week-day-value { font-size: 11px; font-weight: 700; margin-top: 2px; }
+
+/* ========== TIMER HISTORY ========== */
+.timer-history-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.timer-history-item:last-child { border-bottom: none; }
+.timer-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+.timer-dot.cleared { background: var(--accent-green); }
+.timer-dot.expired { background: var(--accent-red); }
+</style>
+</head>
+<body>
+
+<!-- ========== HEADER ========== -->
+<header class="header">
+  <div class="header-logo">
+    <svg viewBox="0 0 28 28" fill="none">
+      <path d="M14 3L4 25h8l2-6 2 6h8L14 3z" fill="#0f9b58" opacity="0.8"/>
+      <path d="M10 18l4-8 4 8" stroke="#4ade80" stroke-width="1.5" fill="none"/>
+      <circle cx="14" cy="8" r="2" fill="#4ade80"/>
+    </svg>
+    <span><span class="logo-trail">Trail</span><span class="logo-pilot">Pilot</span></span>
+  </div>
+  <div class="header-actions">
+    <button class="header-btn" title="Benachrichtigungen">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+    </button>
+    <button class="header-btn" title="Einstellungen">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- ========== MAIN CONTENT ========== -->
+<main class="main-content">
+
+  <!-- ========== DASHBOARD ========== -->
+  <section id="screen-home" class="screen active">
+
+    <!-- Ride Score -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Ride Score</span>
+        <span class="badge badge-green">Perfekt</span>
+      </div>
+      <div class="circular-gauge" id="ride-score-gauge">
+        <svg viewBox="0 0 140 140">
+          <circle class="track" cx="70" cy="70" r="58"/>
+          <circle class="fill" cx="70" cy="70" r="58"
+            stroke="#4ade80"
+            stroke-dasharray="364.42"
+            stroke-dashoffset="36.44"/>
+        </svg>
+        <div class="gauge-center">
+          <div class="gauge-value" style="color:#4ade80">90</div>
+          <div class="gauge-label">von 100</div>
+        </div>
+      </div>
+      <div style="text-align:center; margin-top:8px; font-size:13px; color:var(--text-secondary)">
+        Ideale Bedingungen zum Biken in Eckental
+      </div>
+    </div>
+
+    <!-- Weather Strip -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Wetter Eckental</span>
+        <span class="badge badge-green">Trocken</span>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-around;">
+        <div style="text-align:center;">
+          <div style="font-size:36px;">&#9925;</div>
+          <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Wolkig</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:28px; font-weight:800;">12&deg;C</div>
+          <div style="font-size:12px; color:var(--text-secondary);">9&ndash;15&deg;C</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:16px; font-weight:600;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><path d="M9.59 4.59A2 2 0 1111 8H2m10.59 11.41A2 2 0 1014 16H2m15.73-8.27A2.5 2.5 0 1119.5 12H2"/></svg>
+            12 km/h
+          </div>
+          <div style="font-size:12px; color:var(--text-secondary);">SW</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:16px; font-weight:600;">65%</div>
+          <div style="font-size:12px; color:var(--text-secondary);">Feuchte</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trail Condition -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Trail-Zustand</span>
+        <span class="badge badge-green">
+          <span class="condition-dot condition-dry"></span> Trocken
+        </span>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="font-size:28px;">&#127794;</div>
+        <div style="flex:1;">
+          <div style="font-size:14px; font-weight:600;">Boden trocken bis leicht feucht</div>
+          <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Konfidenz: 85% &mdash; Letzter Regen vor 3 Tagen</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div style="margin-top:12px;">
+      <div class="section-title">Schnellzugriff</div>
+      <div class="quick-actions">
+        <button class="quick-action" onclick="switchTab('tours')">
+          <span class="qa-icon">&#128506;</span>
+          <span class="qa-label">Tour planen</span>
+        </button>
+        <button class="quick-action" onclick="switchTab('trails')">
+          <span class="qa-icon">&#127795;</span>
+          <span class="qa-label">Trail finden</span>
+        </button>
+        <button class="quick-action" onclick="switchTab('bike')">
+          <span class="qa-icon">&#128295;</span>
+          <span class="qa-label">Bike Check</span>
+        </button>
+        <button class="quick-action" onclick="switchTab('safety')">
+          <span class="qa-icon">&#9201;</span>
+          <span class="qa-label">Timer</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Weekend Preview -->
+    <div class="card" style="margin-top:12px;">
+      <div class="card-header">
+        <span class="card-title">Wochenend-Vorschau</span>
+      </div>
+      <div class="weekend-row">
+        <div class="weekend-day">
+          <div class="weekend-day-name">Samstag</div>
+          <div class="weekend-score" style="color:#4ade80;">100</div>
+          <div class="weekend-weather">&#9728;&#65039;</div>
+          <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">16&deg;C &bull; Sonnig</div>
+        </div>
+        <div class="weekend-day">
+          <div class="weekend-day-name">Sonntag</div>
+          <div class="weekend-score" style="color:#4ade80;">90</div>
+          <div class="weekend-weather">&#9925;</div>
+          <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">14&deg;C &bull; Wolkig</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Next Service -->
+    <div class="card" style="margin-top:12px;">
+      <div class="card-header">
+        <span class="card-title">Service-Status</span>
+        <span class="badge badge-green">Alles OK</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="font-size:24px;">&#9881;&#65039;</div>
+        <div style="flex:1;">
+          <div style="font-size:14px; font-weight:600;">Kette: 4% Verschlei&szlig;</div>
+          <div style="font-size:12px; color:var(--text-secondary);">~1.445 km verbleibend &bull; N&auml;chster Service nicht f&auml;llig</div>
+          <div class="progress-bar" style="margin-top:6px;"><div class="progress-fill progress-green" style="width:4%;"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== TOURS SCREEN ========== -->
+  <section id="screen-tours" class="screen">
+    <div class="section-title">&#128506; Touren</div>
+
+    <div class="search-bar">
+      <span class="search-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      </span>
+      <input type="text" placeholder="MTB Touren um Eckental suchen..." id="tour-search-input">
+    </div>
+
+    <div class="range-group">
+      <label>Radius</label>
+      <input type="range" min="5" max="50" value="20" id="tour-radius" oninput="document.getElementById('radius-val').textContent=this.value+'km'">
+      <span class="range-value" id="radius-val">20km</span>
+    </div>
+
+    <!-- Tour Cards -->
+    <div id="tour-list">
+      <div class="card tour-card" onclick="openTourDetail(0)">
+        <div class="tour-card-top">
+          <div class="tour-name">Lillachquelle &ndash; Teufelstisch Rundtour</div>
+          <span class="badge badge-orange">Mittel</span>
+        </div>
+        <div class="tour-stats">
+          <span class="tour-stat"><span class="stat-icon">&#128207;</span> 32.4 km</span>
+          <span class="tour-stat"><span class="stat-icon">&#9968;</span> 680 hm</span>
+          <span class="tour-stat"><span class="stat-icon">&#9201;</span> 3:15h</span>
+        </div>
+        <div class="tour-source">
+          <span class="badge badge-blue">Komoot</span>
+          <span style="font-size:12px; color:var(--text-muted);">Eckental / Weisseno&szlig;he</span>
+        </div>
+      </div>
+
+      <div class="card tour-card" onclick="openTourDetail(1)">
+        <div class="tour-card-top">
+          <div class="tour-name">Festung Rothenberg &ndash; Glatzenstein</div>
+          <span class="badge badge-orange">Mittel</span>
+        </div>
+        <div class="tour-stats">
+          <span class="tour-stat"><span class="stat-icon">&#128207;</span> 28.1 km</span>
+          <span class="tour-stat"><span class="stat-icon">&#9968;</span> 520 hm</span>
+          <span class="tour-stat"><span class="stat-icon">&#9201;</span> 2:45h</span>
+        </div>
+        <div class="tour-source">
+          <span class="badge badge-blue">Komoot</span>
+          <span style="font-size:12px; color:var(--text-muted);">Schnaittach / Forth</span>
+        </div>
+      </div>
+
+      <div class="card tour-card" onclick="openTourDetail(2)">
+        <div class="tour-card-top">
+          <div class="tour-name">Birnbaum &ndash; Sklavensee, Kalchreuth</div>
+          <span class="badge badge-green">Leicht</span>
+        </div>
+        <div class="tour-stats">
+          <span class="tour-stat"><span class="stat-icon">&#128207;</span> 18.7 km</span>
+          <span class="tour-stat"><span class="stat-icon">&#9968;</span> 310 hm</span>
+          <span class="tour-stat"><span class="stat-icon">&#9201;</span> 1:50h</span>
+        </div>
+        <div class="tour-source">
+          <span class="badge badge-blue">Komoot</span>
+          <span style="font-size:12px; color:var(--text-muted);">Kalchreuth / Eckental</span>
+        </div>
+      </div>
+
+      <div class="card tour-card" onclick="openTourDetail(3)">
+        <div class="tour-card-top">
+          <div class="tour-name">Schmau&szlig;weiher &ndash; G&auml;nsbrunnenweiher</div>
+          <span class="badge badge-green">Leicht</span>
+        </div>
+        <div class="tour-stats">
+          <span class="tour-stat"><span class="stat-icon">&#128207;</span> 14.2 km</span>
+          <span class="tour-stat"><span class="stat-icon">&#9968;</span> 180 hm</span>
+          <span class="tour-stat"><span class="stat-icon">&#9201;</span> 1:15h</span>
+        </div>
+        <div class="tour-source">
+          <span class="badge badge-blue">Komoot</span>
+          <span style="font-size:12px; color:var(--text-muted);">Forth / Eckenhaid</span>
+        </div>
+      </div>
+
+      <div class="card tour-card" onclick="openTourDetail(4)">
+        <div class="tour-card-top">
+          <div class="tour-name">Frankenweg &ndash; Etappe N&uuml;rnberg&ndash;Pottenstein</div>
+          <span class="badge badge-red">Schwer</span>
+        </div>
+        <div class="tour-stats">
+          <span class="tour-stat"><span class="stat-icon">&#128207;</span> 54.8 km</span>
+          <span class="tour-stat"><span class="stat-icon">&#9968;</span> 1.240 hm</span>
+          <span class="tour-stat"><span class="stat-icon">&#9201;</span> 5:30h</span>
+        </div>
+        <div class="tour-source">
+          <span class="badge badge-gray">GPS-Tour.info</span>
+          <span style="font-size:12px; color:var(--text-muted);">Fr&auml;nkische Schweiz</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== TOUR DETAIL OVERLAY ========== -->
+  <div class="overlay" id="tour-detail-overlay">
+    <div class="overlay-header">
+      <button class="btn btn-icon btn-secondary" onclick="closeTourDetail()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <h2 id="tour-detail-title">Tour Details</h2>
+    </div>
+    <div class="overlay-body" id="tour-detail-body"></div>
+  </div>
+
+  <!-- ========== TRAILS SCREEN ========== -->
+  <section id="screen-trails" class="screen">
+    <div class="section-title">&#127795; Trails</div>
+
+    <div class="map-placeholder">
+      <span class="map-icon">&#128506;</span>
+      <span>OSM Map &mdash; kommt bald</span>
+      <span style="font-size:11px;">Eckental &bull; 49.58&deg;N, 11.23&deg;E</span>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <div style="font-size:12px; color:var(--text-secondary); font-weight:600; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">Schwierigkeit</div>
+      <div class="chip-row" id="diff-filter">
+        <button class="chip active" data-diff="all" onclick="filterTrails(this)">Alle</button>
+        <button class="chip" data-diff="S0" onclick="filterTrails(this)" style="--chip-color:var(--s0);">S0</button>
+        <button class="chip" data-diff="S1" onclick="filterTrails(this)" style="--chip-color:var(--s1);">S1</button>
+        <button class="chip" data-diff="S2" onclick="filterTrails(this)" style="--chip-color:var(--s2);">S2</button>
+        <button class="chip" data-diff="S3" onclick="filterTrails(this)" style="--chip-color:var(--s3);">S3+</button>
+      </div>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <div style="font-size:12px; color:var(--text-secondary); font-weight:600; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">Untergrund</div>
+      <div class="chip-row" id="surface-filter">
+        <button class="chip active" data-surface="all" onclick="filterSurface(this)">Alle</button>
+        <button class="chip" data-surface="dirt" onclick="filterSurface(this)">Erde</button>
+        <button class="chip" data-surface="gravel" onclick="filterSurface(this)">Schotter</button>
+        <button class="chip" data-surface="rock" onclick="filterSurface(this)">Fels</button>
+      </div>
+    </div>
+
+    <div id="trail-list">
+      <!-- Populated by JS -->
+    </div>
+  </section>
+
+  <!-- ========== WEATHER SCREEN ========== -->
+  <section id="screen-weather" class="screen">
+    <div class="section-title">&#9729;&#65039; Wetter</div>
+
+    <!-- Alert Banner -->
+    <div class="alert-banner alert-banner-yellow" style="margin-bottom:12px;">
+      <span class="alert-icon">&#9888;&#65039;</span>
+      <div>
+        <strong>FROST-Warnung</strong> bis 08:00 &mdash; Bodenfrost m&ouml;glich in Tallagen
+      </div>
+    </div>
+
+    <!-- Current Conditions -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Aktuell &bull; Eckental</span>
+        <span style="font-size:12px; color:var(--text-muted);">14:00</span>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <div>
+          <div style="font-size:48px; font-weight:800; line-height:1;">12&deg;</div>
+          <div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">Gef&uuml;hlt 10&deg;C</div>
+        </div>
+        <div style="font-size:56px; line-height:1;">&#9925;</div>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:16px;">
+        <div style="text-align:center; padding:8px; background:rgba(255,255,255,0.03); border-radius:var(--radius-sm);">
+          <div style="font-size:16px; font-weight:700;">12</div>
+          <div style="font-size:10px; color:var(--text-muted);">km/h Wind</div>
+        </div>
+        <div style="text-align:center; padding:8px; background:rgba(255,255,255,0.03); border-radius:var(--radius-sm);">
+          <div style="font-size:16px; font-weight:700;">65%</div>
+          <div style="font-size:10px; color:var(--text-muted);">Feuchte</div>
+        </div>
+        <div style="text-align:center; padding:8px; background:rgba(255,255,255,0.03); border-radius:var(--radius-sm);">
+          <div style="font-size:16px; font-weight:700;">1018</div>
+          <div style="font-size:10px; color:var(--text-muted);">hPa</div>
+        </div>
+        <div style="text-align:center; padding:8px; background:rgba(255,255,255,0.03); border-radius:var(--radius-sm);">
+          <div style="font-size:16px; font-weight:700;">5</div>
+          <div style="font-size:10px; color:var(--text-muted);">UV-Index</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hourly Forecast -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Stundenverlauf</span>
+      </div>
+      <div class="scroll-row">
+        <div class="hourly-card"><span class="h-time">14h</span><span class="h-icon">&#9925;</span><span class="h-temp">12&deg;</span></div>
+        <div class="hourly-card"><span class="h-time">15h</span><span class="h-icon">&#9925;</span><span class="h-temp">13&deg;</span></div>
+        <div class="hourly-card"><span class="h-time">16h</span><span class="h-icon">&#9925;</span><span class="h-temp">14&deg;</span></div>
+        <div class="hourly-card"><span class="h-time">17h</span><span class="h-icon">&#9925;</span><span class="h-temp">15&deg;</span></div>
+        <div class="hourly-card"><span class="h-time">18h</span><span class="h-icon">&#9925;</span><span class="h-temp">13&deg;</span></div>
+        <div class="hourly-card"><span class="h-time">19h</span><span class="h-icon">&#127761;</span><span class="h-temp">11&deg;</span></div>
+        <div class="hourly-card"><span class="h-time">20h</span><span class="h-icon">&#127761;</span><span class="h-temp">10&deg;</span></div>
+        <div class="hourly-card"><span class="h-time">21h</span><span class="h-icon">&#127761;</span><span class="h-temp">9&deg;</span></div>
+        <div class="hourly-card"><span class="h-time">22h</span><span class="h-icon">&#127761;</span><span class="h-temp">9&deg;</span></div>
+      </div>
+    </div>
+
+    <!-- Rain Radar -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Regenradar</span>
+      </div>
+      <div class="alert-banner alert-banner-green">
+        <span class="alert-icon">&#10003;</span>
+        <span>Kein Regen in den n&auml;chsten 2 Stunden</span>
+      </div>
+    </div>
+
+    <!-- 48h Rain History -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Niederschlag 48h</span>
+        <span style="font-size:12px; color:var(--text-muted);">mm</span>
+      </div>
+      <div class="bar-chart" id="rain-chart">
+        <!-- Populated by JS -->
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-top:20px; font-size:10px; color:var(--text-muted);">
+        <span>vor 48h</span>
+        <span>vor 24h</span>
+        <span>Jetzt</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== BIKE GARAGE SCREEN ========== -->
+  <section id="screen-bike" class="screen">
+    <div class="section-title">&#128295; Bike Garage</div>
+
+    <!-- Bike Selector -->
+    <div class="card" style="display:flex; align-items:center; justify-content:space-between;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="font-size:32px;">&#128692;</div>
+        <div>
+          <div style="font-size:16px; font-weight:700;">Canyon Spectral 29</div>
+          <div style="font-size:12px; color:var(--text-secondary);">CF 7 &bull; 2023</div>
+        </div>
+      </div>
+      <span class="badge badge-green">Aktiv</span>
+    </div>
+
+    <!-- Bike Stats -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Statistik</span>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; text-align:center;">
+        <div>
+          <div style="font-size:22px; font-weight:800;">1.247</div>
+          <div style="font-size:11px; color:var(--text-secondary);">Gesamt km</div>
+        </div>
+        <div>
+          <div style="font-size:22px; font-weight:800;">86</div>
+          <div style="font-size:11px; color:var(--text-secondary);">Stunden</div>
+        </div>
+        <div>
+          <div style="font-size:22px; font-weight:800;">31.450</div>
+          <div style="font-size:11px; color:var(--text-secondary);">H&ouml;henmeter</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Component Wear -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Komponenten-Verschlei&szlig;</span>
+      </div>
+      <div id="component-list">
+        <!-- Kette -->
+        <div class="component-item">
+          <div class="component-top">
+            <div>
+              <div class="component-name">Kette</div>
+              <div class="component-detail">Shimano XT CN-M8100 &bull; seit 12.01.2026</div>
+            </div>
+            <span class="badge badge-green">4%</span>
+          </div>
+          <div class="component-progress">
+            <div class="progress-bar"><div class="progress-fill progress-green" style="width:4%"></div></div>
+            <span class="component-pct" style="color:var(--accent-green);">55 / 1.500 km</span>
+          </div>
+        </div>
+
+        <!-- Bremsbelag vorne -->
+        <div class="component-item">
+          <div class="component-top">
+            <div>
+              <div class="component-name">Bremsbel&auml;ge vorne</div>
+              <div class="component-detail">Shimano XT M8120 &bull; seit 12.01.2026</div>
+            </div>
+            <span class="badge badge-green">2%</span>
+          </div>
+          <div class="component-progress">
+            <div class="progress-bar"><div class="progress-fill progress-green" style="width:2%"></div></div>
+            <span class="component-pct" style="color:var(--accent-green);">30 / 1.200 km</span>
+          </div>
+        </div>
+
+        <!-- Bremsbelag hinten -->
+        <div class="component-item">
+          <div class="component-top">
+            <div>
+              <div class="component-name">Bremsbel&auml;ge hinten</div>
+              <div class="component-detail">Shimano XT M8120 &bull; seit 12.01.2026</div>
+            </div>
+            <span class="badge badge-green">3%</span>
+          </div>
+          <div class="component-progress">
+            <div class="progress-bar"><div class="progress-fill progress-green" style="width:3%"></div></div>
+            <span class="component-pct" style="color:var(--accent-green);">30 / 1.000 km</span>
+          </div>
+        </div>
+
+        <!-- Reifen vorne -->
+        <div class="component-item">
+          <div class="component-top">
+            <div>
+              <div class="component-name">Reifen vorne</div>
+              <div class="component-detail">Maxxis Minion DHF 29x2.5 &bull; seit 15.02.2026</div>
+            </div>
+            <span class="badge badge-green">2%</span>
+          </div>
+          <div class="component-progress">
+            <div class="progress-bar"><div class="progress-fill progress-green" style="width:2%"></div></div>
+            <span class="component-pct" style="color:var(--accent-green);">35 / 2.000 km</span>
+          </div>
+        </div>
+
+        <!-- Reifen hinten -->
+        <div class="component-item">
+          <div class="component-top">
+            <div>
+              <div class="component-name">Reifen hinten</div>
+              <div class="component-detail">Maxxis Minion DHR II 29x2.4 &bull; seit 15.02.2026</div>
+            </div>
+            <span class="badge badge-green">3%</span>
+          </div>
+          <div class="component-progress">
+            <div class="progress-bar"><div class="progress-fill progress-green" style="width:3%"></div></div>
+            <span class="component-pct" style="color:var(--accent-green);">35 / 1.500 km</span>
+          </div>
+        </div>
+
+        <!-- Gabel -->
+        <div class="component-item">
+          <div class="component-top">
+            <div>
+              <div class="component-name">Gabel-Service</div>
+              <div class="component-detail">Fox 36 Factory &bull; letzter Service 01.12.2025</div>
+            </div>
+            <span class="badge badge-orange">62%</span>
+          </div>
+          <div class="component-progress">
+            <div class="progress-bar"><div class="progress-fill progress-yellow" style="width:62%"></div></div>
+            <span class="component-pct" style="color:var(--accent-orange);">62 / 100h</span>
+          </div>
+        </div>
+
+        <!-- D&auml;mpfer -->
+        <div class="component-item">
+          <div class="component-top">
+            <div>
+              <div class="component-name">D&auml;mpfer-Service</div>
+              <div class="component-detail">Fox Float X &bull; letzter Service 01.12.2025</div>
+            </div>
+            <span class="badge badge-orange">58%</span>
+          </div>
+          <div class="component-progress">
+            <div class="progress-bar"><div class="progress-fill progress-yellow" style="width:58%"></div></div>
+            <span class="component-pct" style="color:var(--accent-orange);">58 / 100h</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;">
+      <button class="btn btn-primary btn-block" onclick="openModal('log-ride-modal')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        Fahrt loggen
+      </button>
+      <button class="btn btn-secondary btn-block" onclick="openModal('service-modal')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+        Service
+      </button>
+    </div>
+  </section>
+
+  <!-- ========== TRAINING SCREEN ========== -->
+  <section id="screen-training" class="screen">
+    <div class="section-title">&#128170; Training</div>
+
+    <!-- Current Goal -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Ziel</span>
+        <span class="badge badge-blue">118 Tage</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div style="font-size:36px;">&#127956;</div>
+        <div style="flex:1;">
+          <div style="font-size:16px; font-weight:700;">Alpencross Ischgl &ndash; Riva</div>
+          <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">15. Juli 2026 &bull; 350 km &bull; 11.000 hm</div>
+          <div class="progress-bar" style="margin-top:8px;"><div class="progress-fill progress-green" style="width:25%;"></div></div>
+          <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Woche 4 von 16</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase Indicator -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Trainingsphase</span>
+        <span class="badge badge-blue">BASE</span>
+      </div>
+      <div style="font-size:14px; font-weight:600; margin-bottom:8px;">Grundlagenausdauer &bull; Woche 4 von 16</div>
+      <div class="progress-bar"><div class="progress-fill progress-green" style="width:25%;"></div></div>
+      <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:11px; color:var(--text-muted);">
+        <span>BASE (16W)</span>
+        <span>BUILD (8W)</span>
+        <span>PEAK (4W)</span>
+        <span>TAPER</span>
+      </div>
+    </div>
+
+    <!-- Fitness Indicators -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Fitness-Indikatoren</span>
+      </div>
+      <div class="fitness-row">
+        <div class="fitness-item">
+          <div class="fitness-value" style="color:var(--accent-blue);">30</div>
+          <div class="fitness-label">CTL (Fitness)</div>
+        </div>
+        <div class="fitness-item">
+          <div class="fitness-value" style="color:var(--accent-orange);">25</div>
+          <div class="fitness-label">ATL (Erm&uuml;dung)</div>
+        </div>
+        <div class="fitness-item">
+          <div class="fitness-value" style="color:var(--accent-green);">+5</div>
+          <div class="fitness-label">TSB (Form)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly Plan -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Wochenplan</span>
+        <span style="font-size:12px; color:var(--text-muted);">KW 12</span>
+      </div>
+      <div class="week-plan">
+        <div class="week-day completed">
+          <div class="week-day-label">Mo</div>
+          <div class="week-day-value">&#10003;</div>
+        </div>
+        <div class="week-day completed">
+          <div class="week-day-label">Di</div>
+          <div class="week-day-value">&#10003;</div>
+        </div>
+        <div class="week-day today">
+          <div class="week-day-label">Mi</div>
+          <div class="week-day-value" style="color:var(--accent-green);">2h</div>
+        </div>
+        <div class="week-day">
+          <div class="week-day-label">Do</div>
+          <div class="week-day-value">Ruhe</div>
+        </div>
+        <div class="week-day">
+          <div class="week-day-label">Fr</div>
+          <div class="week-day-value">1.5h</div>
+        </div>
+        <div class="week-day">
+          <div class="week-day-label">Sa</div>
+          <div class="week-day-value" style="color:var(--accent-green);">3h</div>
+        </div>
+        <div class="week-day">
+          <div class="week-day-label">So</div>
+          <div class="week-day-value">Ruhe</div>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-top:12px; padding-top:10px; border-top:1px solid var(--border-subtle);">
+        <div style="font-size:12px; color:var(--text-secondary);">Geplant: <strong style="color:var(--text-primary);">6.5h / 120 km / 2.800 hm</strong></div>
+      </div>
+    </div>
+
+    <!-- Training History -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Letzte Wochen</span>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-subtle);">
+          <div><span style="font-weight:600;">KW 11</span> <span style="font-size:12px; color:var(--text-secondary);">BASE W3</span></div>
+          <div style="font-size:13px;"><span style="color:var(--accent-green);">5.8h</span> / 6h</div>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-subtle);">
+          <div><span style="font-weight:600;">KW 10</span> <span style="font-size:12px; color:var(--text-secondary);">BASE W2</span></div>
+          <div style="font-size:13px;"><span style="color:var(--accent-green);">6.2h</span> / 5.5h</div>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0;">
+          <div><span style="font-weight:600;">KW 9</span> <span style="font-size:12px; color:var(--text-secondary);">BASE W1</span></div>
+          <div style="font-size:13px;"><span style="color:var(--accent-orange);">3.5h</span> / 5h</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== eBIKE SCREEN ========== -->
+  <section id="screen-ebike" class="screen">
+    <div class="section-title">&#9889; eBike</div>
+
+    <!-- Battery Gauge -->
+    <div class="card" style="text-align:center;">
+      <div class="card-header">
+        <span class="card-title">Bosch PowerTube 625Wh</span>
+        <span class="badge badge-green">Verbunden</span>
+      </div>
+      <div class="circular-gauge" id="battery-gauge" style="width:160px; height:160px;">
+        <svg viewBox="0 0 160 160">
+          <circle class="track" cx="80" cy="80" r="66"/>
+          <circle class="fill" cx="80" cy="80" r="66"
+            stroke="#4ade80"
+            stroke-dasharray="414.69"
+            stroke-dashoffset="82.94"/>
+        </svg>
+        <div class="gauge-center">
+          <div class="gauge-value" style="color:#4ade80; font-size:42px;">80%</div>
+          <div class="gauge-label">500 Wh</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Range Estimate -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Reichweite</span>
+        <span class="badge badge-blue">Tour-Modus</span>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:42px; font-weight:800;">~45 km</div>
+        <div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">Gesch&auml;tzt bei aktuellem Gel&auml;nde &amp; Wetter</div>
+      </div>
+    </div>
+
+    <!-- Mode Comparison -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Modi-Vergleich</span>
+      </div>
+      <table class="mode-table">
+        <thead>
+          <tr><th>Modus</th><th>Reichweite</th><th>Unterst&uuml;tzung</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Eco</td><td><strong>75 km</strong></td><td>40%</td></tr>
+          <tr class="active-mode"><td>Tour</td><td><strong>45 km</strong></td><td>100%</td></tr>
+          <tr><td>eMTB</td><td><strong>35 km</strong></td><td>120&ndash;300%</td></tr>
+          <tr><td>Turbo</td><td><strong>22 km</strong></td><td>340%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Route Check -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Routen-Check</span>
+      </div>
+      <div style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;">Schaffe ich die Tour mit aktuellem Akku?</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+        <div>
+          <label style="font-size:11px; color:var(--text-muted); text-transform:uppercase;">Distanz (km)</label>
+          <input type="number" value="35" style="width:100%; padding:8px; background:var(--bg-input); border:1px solid var(--border-card); border-radius:var(--radius-sm); font-size:14px; color:var(--text-primary); outline:none; margin-top:4px;" id="ebike-distance">
+        </div>
+        <div>
+          <label style="font-size:11px; color:var(--text-muted); text-transform:uppercase;">H&ouml;henmeter</label>
+          <input type="number" value="800" style="width:100%; padding:8px; background:var(--bg-input); border:1px solid var(--border-card); border-radius:var(--radius-sm); font-size:14px; color:var(--text-primary); outline:none; margin-top:4px;" id="ebike-elevation">
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="checkEbikeRange()">Pr&uuml;fen</button>
+      <div id="ebike-result" style="margin-top:12px; display:none;"></div>
+    </div>
+  </section>
+
+  <!-- ========== SAFETY SCREEN ========== -->
+  <section id="screen-safety" class="screen">
+    <div class="section-title">&#127384; Sicherheit</div>
+
+    <!-- Active Timer -->
+    <div class="card">
+      <div class="timer-display">
+        <div class="timer-status" style="color:var(--accent-green);">&#9679; Aktiv</div>
+        <div class="timer-time" id="timer-display">492</div>
+        <div class="timer-unit">Minuten verbleibend</div>
+      </div>
+      <div style="padding:0 16px 4px;">
+        <div style="font-size:13px; color:var(--text-secondary); margin-bottom:8px;">
+          <strong style="color:var(--text-primary);">Lillachquelle Runde ab Forth</strong>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-secondary);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+          Notfallkontakt: Anna &bull; 0170-1234567
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;">
+      <button class="btn btn-primary btn-block" onclick="clearTimer()" style="background:var(--accent-green);">
+        &#10003; Entwarnung
+      </button>
+      <button class="btn btn-block" onclick="openModal('timer-modal')" style="background:var(--accent-orange); color:#fff;">
+        &#9201; Neuer Timer
+      </button>
+    </div>
+
+    <!-- Emergency Info -->
+    <div class="card" style="margin-top:12px;">
+      <div class="card-header">
+        <span class="card-title">Notfall-Infos</span>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:8px; font-size:13px;">
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color:var(--text-secondary);">Standort</span>
+          <span>49.5833&deg;N, 11.2333&deg;E</span>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color:var(--text-secondary);">Bergrettung</span>
+          <span style="font-weight:600;">112</span>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color:var(--text-secondary);">Polizei</span>
+          <span style="font-weight:600;">110</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timer History -->
+    <div class="card" style="margin-top:12px;">
+      <div class="card-header">
+        <span class="card-title">Timer-Verlauf</span>
+      </div>
+      <div class="timer-history-item">
+        <span class="timer-dot cleared"></span>
+        <div style="flex:1;">
+          <div style="font-size:13px; font-weight:600;">Glatzenstein Runde</div>
+          <div style="font-size:11px; color:var(--text-secondary);">16. M&auml;rz &bull; 240 min</div>
+        </div>
+        <span class="badge badge-green">Entwarnt</span>
+      </div>
+      <div class="timer-history-item">
+        <span class="timer-dot cleared"></span>
+        <div style="flex:1;">
+          <div style="font-size:13px; font-weight:600;">Kalchreuth Trail</div>
+          <div style="font-size:11px; color:var(--text-secondary);">14. M&auml;rz &bull; 180 min</div>
+        </div>
+        <span class="badge badge-green">Entwarnt</span>
+      </div>
+      <div class="timer-history-item">
+        <span class="timer-dot expired"></span>
+        <div style="flex:1;">
+          <div style="font-size:13px; font-weight:600;">Nachtride Hetzles</div>
+          <div style="font-size:11px; color:var(--text-secondary);">10. M&auml;rz &bull; 120 min</div>
+        </div>
+        <span class="badge badge-red">Abgelaufen</span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ========== BOTTOM NAVIGATION ========== -->
+<nav class="bottom-nav">
+  <div class="nav-main">
+    <button class="nav-item active" data-screen="home" onclick="switchTab('home')">
+      <span class="nav-icon">&#127968;</span>
+      <span>Home</span>
+    </button>
+    <button class="nav-item" data-screen="tours" onclick="switchTab('tours')">
+      <span class="nav-icon">&#128506;</span>
+      <span>Touren</span>
+    </button>
+    <button class="nav-item" data-screen="trails" onclick="switchTab('trails')">
+      <span class="nav-icon">&#127795;</span>
+      <span>Trails</span>
+    </button>
+    <button class="nav-item" data-screen="weather" onclick="switchTab('weather')">
+      <span class="nav-icon">&#9729;&#65039;</span>
+      <span>Wetter</span>
+    </button>
+    <button class="nav-item" data-screen="more" onclick="toggleMoreMenu(event)">
+      <span class="nav-icon">&#8943;</span>
+      <span>Mehr</span>
+    </button>
+  </div>
+</nav>
+
+<!-- More Menu -->
+<div class="more-menu-backdrop" id="more-backdrop" onclick="closeMoreMenu()"></div>
+<div class="more-menu" id="more-menu">
+  <button class="more-menu-item" onclick="switchTab('bike'); closeMoreMenu();">
+    <span class="nav-icon">&#128295;</span> Bike Garage
+  </button>
+  <button class="more-menu-item" onclick="switchTab('training'); closeMoreMenu();">
+    <span class="nav-icon">&#128170;</span> Training
+  </button>
+  <button class="more-menu-item" onclick="switchTab('ebike'); closeMoreMenu();">
+    <span class="nav-icon">&#9889;</span> eBike
+  </button>
+  <button class="more-menu-item" onclick="switchTab('safety'); closeMoreMenu();">
+    <span class="nav-icon">&#127384;</span> Sicherheit
+  </button>
+</div>
+
+<!-- ========== MODALS ========== -->
+
+<!-- Log Ride Modal -->
+<div class="modal-overlay" id="log-ride-modal" onclick="if(event.target===this)closeModal(this.id)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Fahrt loggen</div>
+    <div class="form-group">
+      <label class="form-label">Distanz (km)</label>
+      <input type="number" placeholder="z.B. 25" value="">
+    </div>
+    <div class="form-group">
+      <label class="form-label">H&ouml;henmeter</label>
+      <input type="number" placeholder="z.B. 650" value="">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Dauer (Stunden)</label>
+      <input type="number" placeholder="z.B. 2.5" step="0.5" value="">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Gel&auml;nde</label>
+      <div class="terrain-grid">
+        <button class="terrain-option selected" onclick="selectTerrain(this)">
+          <span class="t-icon">&#127795;</span> Trail
+        </button>
+        <button class="terrain-option" onclick="selectTerrain(this)">
+          <span class="t-icon">&#128739;</span> Stra&szlig;e
+        </button>
+        <button class="terrain-option" onclick="selectTerrain(this)">
+          <span class="t-icon">&#127956;</span> Mixed
+        </button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Wetter</label>
+      <select>
+        <option>Trocken</option>
+        <option>Leichter Regen</option>
+        <option>Nass</option>
+        <option>Schlammig</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" style="flex:1;" onclick="closeModal('log-ride-modal')">Abbrechen</button>
+      <button class="btn btn-primary" style="flex:1;" onclick="closeModal('log-ride-modal')">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Service Modal -->
+<div class="modal-overlay" id="service-modal" onclick="if(event.target===this)closeModal(this.id)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Service eintragen</div>
+    <div class="form-group">
+      <label class="form-label">Komponente</label>
+      <select>
+        <option>Kette</option>
+        <option>Bremsbel&auml;ge vorne</option>
+        <option>Bremsbel&auml;ge hinten</option>
+        <option>Reifen vorne</option>
+        <option>Reifen hinten</option>
+        <option>Gabel-Service</option>
+        <option>D&auml;mpfer-Service</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Service-Typ</label>
+      <select>
+        <option>Getauscht (Neu)</option>
+        <option>Gewartet</option>
+        <option>Gereinigt</option>
+        <option>Eingestellt</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notizen</label>
+      <textarea rows="3" placeholder="Optionale Notizen..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" style="flex:1;" onclick="closeModal('service-modal')">Abbrechen</button>
+      <button class="btn btn-primary" style="flex:1;" onclick="closeModal('service-modal')">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Timer Modal -->
+<div class="modal-overlay" id="timer-modal" onclick="if(event.target===this)closeModal(this.id)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Sicherheits-Timer setzen</div>
+    <div class="form-group">
+      <label class="form-label">Dauer (Minuten)</label>
+      <div style="display:flex; gap:8px;">
+        <button class="chip active" onclick="selectTimerDuration(this, 120)">2h</button>
+        <button class="chip" onclick="selectTimerDuration(this, 180)">3h</button>
+        <button class="chip" onclick="selectTimerDuration(this, 240)">4h</button>
+        <button class="chip" onclick="selectTimerDuration(this, 360)">6h</button>
+        <input type="number" placeholder="Custom" style="width:80px; padding:6px 10px; background:var(--bg-input); border:1px solid var(--border-card); border-radius:var(--radius-pill); font-size:12px; color:var(--text-primary); outline:none; text-align:center;">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Beschreibung</label>
+      <input type="text" placeholder="z.B. Lillachquelle Runde">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notfallkontakt</label>
+      <input type="text" placeholder="Name + Nummer" value="Anna 0170-1234567">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" style="flex:1;" onclick="closeModal('timer-modal')">Abbrechen</button>
+      <button class="btn btn-primary" style="flex:1;" onclick="closeModal('timer-modal')">Timer starten</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+/* ========== DATA ========== */
+const TRAILS = [
+  { name: 'Fr\u00e4ngman', diff: 'S1', surface: 'dirt', length: 277, condition: 'dry' },
+  { name: 'Jack-Meier-Weg', diff: 'S1', surface: 'dirt', length: 419, condition: 'dry' },
+  { name: 'Teufelsgraben', diff: 'S1', surface: 'dirt', length: 369, condition: 'damp' },
+  { name: 'Winterleite', diff: 'S1', surface: 'dirt', length: 296, condition: 'dry' },
+  { name: 'Hidden Trail', diff: 'S1', surface: 'dirt', length: 409, condition: 'dry' },
+  { name: 'Hetzles Nordabfahrt', diff: 'S2', surface: 'rock', length: 315, condition: 'dry' },
+  { name: 'Rathsberg Downhill', diff: 'S2', surface: 'dirt', length: 520, condition: 'damp' },
+  { name: 'Kalchreuth Steinrinne', diff: 'S2', surface: 'rock', length: 180, condition: 'wet' },
+  { name: 'Hetzles S\u00fcdgrat', diff: 'S3', surface: 'rock', length: 245, condition: 'dry' },
+  { name: 'Marloffsteiner Steilstufe', diff: 'S3', surface: 'rock', length: 85, condition: 'muddy' },
+];
+
+const TOURS = [
+  {
+    name: 'Lillachquelle \u2013 Teufelstisch Rundtour',
+    dist: '32.4 km', elev: '680 hm', time: '3:15h', diff: 'Mittel', source: 'Komoot',
+    region: 'Eckental / Wei\u00dfeno\u00dfe',
+    desc: 'Abwechslungsreiche Rundtour durch die Fr\u00e4nkische Schweiz. Start in Forth, \u00fcber die versinterte Lillachquelle zum markanten Teufelstisch-Felsen. R\u00fccktour \u00fcber Waldtrails mit sch\u00f6nen Ausblicken ins Tal.',
+    surfaces: ['Waldweg', 'Singletrail', 'Schotterweg', 'Kurze Asphaltpassage'],
+    highlights: ['Lillachquelle (Naturdenkmal)', 'Teufelstisch-Felsen', 'Panoramablick Lillachtal']
+  },
+  {
+    name: 'Festung Rothenberg \u2013 Glatzenstein',
+    dist: '28.1 km', elev: '520 hm', time: '2:45h', diff: 'Mittel', source: 'Komoot',
+    region: 'Schnaittach / Forth',
+    desc: 'Historische Tour zur imposanten Festung Rothenberg mit Abstecher zum Glatzenstein. Flowige Waldtrails und grandiose Fernsicht von der Festungsruine.',
+    surfaces: ['Waldweg', 'Forststra\u00dfe', 'Singletrail'],
+    highlights: ['Festung Rothenberg', 'Glatzenstein', 'Aussichtspunkt Rothenberg']
+  },
+  {
+    name: 'Birnbaum \u2013 Sklavensee, Kalchreuth',
+    dist: '18.7 km', elev: '310 hm', time: '1:50h', diff: 'Leicht', source: 'Komoot',
+    region: 'Kalchreuth / Eckental',
+    desc: 'Entspannte Feierabendrunde durch den Reichswald. Vorbei am idyllischen Sklavensee mit M\u00f6glichkeit zur Einkehr in Kalchreuth.',
+    surfaces: ['Waldweg', 'Forststra\u00dfe', 'Naturweg'],
+    highlights: ['Sklavensee', 'Kalchreuth Ortskern', 'Reichswald']
+  },
+  {
+    name: 'Schmau\u00dfweiher \u2013 G\u00e4nsbrunnenweiher',
+    dist: '14.2 km', elev: '180 hm', time: '1:15h', diff: 'Leicht', source: 'Komoot',
+    region: 'Forth / Eckenhaid',
+    desc: 'Gem\u00fctliche Tour durch die Weihergebiete rund um Forth. Ideal f\u00fcr Einsteiger oder als lockere Regenerationsrunde.',
+    surfaces: ['Forststra\u00dfe', 'Naturweg', 'Feldweg'],
+    highlights: ['Schmau\u00dfweiher', 'G\u00e4nsbrunnenweiher', 'Forthbach-Aue']
+  },
+  {
+    name: 'Frankenweg \u2013 Etappe N\u00fcrnberg\u2013Pottenstein',
+    dist: '54.8 km', elev: '1.240 hm', time: '5:30h', diff: 'Schwer', source: 'GPS-Tour.info',
+    region: 'Fr\u00e4nkische Schweiz',
+    desc: 'Anspruchsvolle Langstrecke entlang des Frankenwegs. Technische Trails, steile Anstiege und Panoramablicke \u00fcber die Fr\u00e4nkische Schweiz. Nur f\u00fcr fitte Fahrer mit guter Kondition.',
+    surfaces: ['Singletrail', 'Waldweg', 'Felspassagen', 'Forststra\u00dfe'],
+    highlights: ['Fr\u00e4nkische-Schweiz Panorama', 'Pottenstein', 'Teufelsh\u00f6hle']
+  }
+];
+
+const RAIN_48H = [0,0,0,0,0,0.2,0.5,1.2,2.1,3.5,2.8,1.5,0.8,0.3,0,0,0,0,0,0,0,0,0,0,
+                   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+
+/* ========== NAVIGATION ========== */
+let currentScreen = 'home';
+const moreScreens = ['bike','training','ebike','safety'];
+
+function switchTab(screen) {
+  currentScreen = screen;
+
+  // Update screens
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById('screen-' + screen);
+  if (target) target.classList.add('active');
+
+  // Update nav items
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const mainNav = document.querySelector(`.nav-item[data-screen="${screen}"]`);
+  if (mainNav) {
+    mainNav.classList.add('active');
+  } else if (moreScreens.includes(screen)) {
+    document.querySelector('.nav-item[data-screen="more"]').classList.add('active');
+  }
+
+  // Update more menu items
+  document.querySelectorAll('.more-menu-item').forEach(m => m.classList.remove('active'));
+}
+
+function toggleMoreMenu(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('more-menu');
+  const backdrop = document.getElementById('more-backdrop');
+  const isOpen = menu.classList.contains('open');
+  if (isOpen) {
+    closeMoreMenu();
+  } else {
+    menu.classList.add('open');
+    backdrop.classList.add('open');
+  }
+}
+
+function closeMoreMenu() {
+  document.getElementById('more-menu').classList.remove('open');
+  document.getElementById('more-backdrop').classList.remove('open');
+}
+
+/* ========== MODALS ========== */
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+/* ========== TOUR DETAIL ========== */
+function openTourDetail(idx) {
+  const t = TOURS[idx];
+  const overlay = document.getElementById('tour-detail-overlay');
+  document.getElementById('tour-detail-title').textContent = t.name;
+
+  const diffClass = t.diff === 'Leicht' ? 'badge-green' : t.diff === 'Mittel' ? 'badge-orange' : 'badge-red';
+  const srcClass = t.source === 'Komoot' ? 'badge-blue' : 'badge-gray';
+
+  document.getElementById('tour-detail-body').innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+      <span class="badge ${diffClass}">${t.diff}</span>
+      <span class="badge ${srcClass}">${t.source}</span>
+      <span class="badge badge-gray">${t.region}</span>
+    </div>
+
+    <div class="card" style="margin-bottom:12px;">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;">
+        <div>
+          <div style="font-size:20px;font-weight:800;">${t.dist.replace(' km','')}</div>
+          <div style="font-size:11px;color:var(--text-secondary);">km</div>
+        </div>
+        <div>
+          <div style="font-size:20px;font-weight:800;">${t.elev.replace(' hm','')}</div>
+          <div style="font-size:11px;color:var(--text-secondary);">H\u00f6henmeter</div>
+        </div>
+        <div>
+          <div style="font-size:20px;font-weight:800;">${t.time.replace('h','')}</div>
+          <div style="font-size:11px;color:var(--text-secondary);">Stunden</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px;">
+      <div class="card-header"><span class="card-title">Beschreibung</span></div>
+      <p style="font-size:13px;line-height:1.6;color:var(--text-secondary);">${t.desc}</p>
+    </div>
+
+    <div class="card" style="margin-bottom:12px;">
+      <div class="card-header"><span class="card-title">Untergr\u00fcnde</span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        ${t.surfaces.map(s => `<span class="badge badge-gray">${s}</span>`).join('')}
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px;">
+      <div class="card-header"><span class="card-title">Highlights</span></div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:6px;">
+        ${t.highlights.map(h => `<li style="font-size:13px;color:var(--text-secondary);display:flex;align-items:center;gap:8px;">
+          <span style="color:var(--accent-green);">&#9679;</span> ${h}
+        </li>`).join('')}
+      </ul>
+    </div>
+
+    <div class="map-placeholder" style="margin-bottom:12px;">
+      <span class="map-icon">&#128506;</span>
+      <span>Kartenansicht &mdash; kommt bald</span>
+    </div>
+
+    <button class="btn btn-primary btn-block" onclick="alert('GPX-Download kommt bald!')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+      GPX herunterladen
+    </button>
+  `;
+
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeTourDetail() {
+  document.getElementById('tour-detail-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+/* ========== TRAILS RENDERING ========== */
+let activeTrailDiff = 'all';
+let activeTrailSurface = 'all';
+
+function renderTrails() {
+  const list = document.getElementById('trail-list');
+  const filtered = TRAILS.filter(t => {
+    const diffMatch = activeTrailDiff === 'all' || t.diff === activeTrailDiff || (activeTrailDiff === 'S3' && (t.diff === 'S3' || t.diff === 'S3+'));
+    const surfMatch = activeTrailSurface === 'all' || t.surface === activeTrailSurface;
+    return diffMatch && surfMatch;
+  });
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted);">Keine Trails mit diesen Filtern gefunden</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(t => {
+    const diffBadge = `badge-${t.diff.toLowerCase().replace('+','')}`;
+    const surfaceLabel = t.surface === 'dirt' ? 'Erde' : t.surface === 'gravel' ? 'Schotter' : 'Fels';
+    return `
+      <div class="card trail-item">
+        <span class="condition-dot condition-${t.condition}"></span>
+        <div class="trail-info">
+          <div class="trail-name">${t.name}</div>
+          <div class="trail-meta">
+            <span class="badge ${diffBadge}" style="padding:2px 6px;font-size:10px;">${t.diff}</span>
+            <span>${surfaceLabel}</span>
+            <span>${t.length}m</span>
+            <span style="text-transform:capitalize;">${
+              t.condition === 'dry' ? 'Trocken' :
+              t.condition === 'damp' ? 'Feucht' :
+              t.condition === 'wet' ? 'Nass' : 'Schlammig'
+            }</span>
+          </div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+    `;
+  }).join('');
+}
+
+function filterTrails(chip) {
+  document.querySelectorAll('#diff-filter .chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  activeTrailDiff = chip.dataset.diff;
+  renderTrails();
+}
+
+function filterSurface(chip) {
+  document.querySelectorAll('#surface-filter .chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  activeTrailSurface = chip.dataset.surface;
+  renderTrails();
+}
+
+/* ========== RAIN CHART ========== */
+function renderRainChart() {
+  const chart = document.getElementById('rain-chart');
+  const maxVal = Math.max(...RAIN_48H, 1);
+  chart.innerHTML = RAIN_48H.map((v, i) => {
+    const h = Math.max((v / maxVal) * 100, v > 0 ? 4 : 1);
+    return `<div class="bar" style="height:${h}%;opacity:${v > 0 ? 0.5 + (v/maxVal)*0.5 : 0.15};"></div>`;
+  }).join('');
+}
+
+/* ========== eBIKE RANGE CHECK ========== */
+function checkEbikeRange() {
+  const dist = parseFloat(document.getElementById('ebike-distance').value) || 0;
+  const elev = parseFloat(document.getElementById('ebike-elevation').value) || 0;
+  const result = document.getElementById('ebike-result');
+
+  // Simple mock calculation: range is ~45km in Tour mode at 80% battery
+  const rangeKm = 45;
+  const elevFactor = 1 + (elev / 2000); // elevation reduces range
+  const effectiveDist = dist * elevFactor;
+  const canMakeIt = effectiveDist <= rangeKm;
+
+  result.style.display = 'block';
+  if (canMakeIt) {
+    const remaining = Math.round(rangeKm - effectiveDist);
+    result.innerHTML = `
+      <div class="alert-banner alert-banner-green">
+        <span class="alert-icon">&#10003;</span>
+        <div>
+          <strong>Machbar!</strong> Gesch\u00e4tzte Reserve: ~${remaining} km im Tour-Modus
+        </div>
+      </div>
+    `;
+  } else {
+    result.innerHTML = `
+      <div class="alert-banner alert-banner-red">
+        <span class="alert-icon">&#9888;&#65039;</span>
+        <div>
+          <strong>Knapp!</strong> Wechsle in Eco-Modus oder lade vorher auf.
+          Fehlend: ~${Math.round(effectiveDist - rangeKm)} km
+        </div>
+      </div>
+    `;
+  }
+}
+
+/* ========== TIMER ========== */
+function clearTimer() {
+  const display = document.getElementById('timer-display');
+  display.textContent = '\u2014';
+  display.parentElement.querySelector('.timer-status').textContent = '\u25CB Kein Timer aktiv';
+  display.parentElement.querySelector('.timer-status').style.color = 'var(--text-muted)';
+  display.parentElement.querySelector('.timer-unit').textContent = '';
+}
+
+/* ========== TERRAIN SELECTOR ========== */
+function selectTerrain(el) {
+  el.parentElement.querySelectorAll('.terrain-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+/* ========== TIMER DURATION SELECTOR ========== */
+function selectTimerDuration(chip, mins) {
+  chip.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+}
+
+/* ========== INIT ========== */
+document.addEventListener('DOMContentLoaded', () => {
+  renderTrails();
+  renderRainChart();
+
+  // Animate ride score on load
+  setTimeout(() => {
+    const gauge = document.querySelector('#ride-score-gauge .fill');
+    if (gauge) {
+      const circumference = 2 * Math.PI * 58;
+      const offset = circumference * (1 - 90/100);
+      gauge.style.strokeDashoffset = offset;
+    }
+  }, 300);
+
+  // Close overlays on Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeTourDetail();
+      closeMoreMenu();
+      document.querySelectorAll('.modal-overlay.open').forEach(m => {
+        m.classList.remove('open');
+        document.body.style.overflow = '';
+      });
+    }
+  });
+});
+</script>
+
+</body>
+</html>
