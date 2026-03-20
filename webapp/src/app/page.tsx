@@ -89,10 +89,10 @@ export default function DashboardPage() {
           <SubScoreBar label="Wind" value={ride_score.wind_score} />
           <SubScoreBar label="Tageslicht" value={ride_score.daylight_score} />
         </div>
-        {ride_score.penalties.length > 0 && (
+        {ride_score.factors && ride_score.factors.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1">
-            {ride_score.penalties.map((p) => (
-              <Badge key={p} variant="red">{p}</Badge>
+            {ride_score.factors.map((f) => (
+              <Badge key={f} variant="red">{f}</Badge>
             ))}
           </div>
         )}
@@ -148,10 +148,19 @@ export default function DashboardPage() {
                     {d.score}
                   </span>
                 </p>
-                <Badge variant={conditionVariant(d.condition)}>
-                  {d.condition}
-                </Badge>
-                <p className="mt-1 text-xs text-text-muted">{d.temp_range}</p>
+                {d.condition && (
+                  <Badge variant={conditionVariant(d.condition)}>
+                    {d.condition}
+                  </Badge>
+                )}
+                {d.verdict && !d.condition && (
+                  <Badge variant={scoreVariant(d.score)}>
+                    {d.verdict}
+                  </Badge>
+                )}
+                {d.temp_range && (
+                  <p className="mt-1 text-xs text-text-muted">{d.temp_range}</p>
+                )}
               </div>
             );
           })}
@@ -164,14 +173,14 @@ export default function DashboardPage() {
           <CardHeader title="Nächster Service" />
           <div className="flex items-center justify-between mb-2">
             <div>
-              <p className="text-sm font-semibold">{next_service.component}</p>
-              <p className="text-xs text-text-secondary">{next_service.bike_name}</p>
+              <p className="text-sm font-semibold">{next_service.component_type}</p>
+              <p className="text-xs text-text-secondary">{next_service.bike}</p>
             </div>
             <Badge
               variant={
-                next_service.status === "ok"
+                next_service.status === "good"
                   ? "green"
-                  : next_service.status === "warn"
+                  : next_service.status === "warning"
                     ? "orange"
                     : "red"
               }

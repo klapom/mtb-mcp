@@ -32,7 +32,7 @@ export interface RideScore {
   trail_score: number;
   wind_score: number;
   daylight_score: number;
-  penalties: string[];
+  factors: string[];
 }
 
 export interface WeatherCurrent {
@@ -56,16 +56,20 @@ export interface WeekendPreview {
 }
 
 export interface DayPreview {
+  date?: string;
   score: number;
-  condition: string;
-  temp_range: string;
+  verdict?: string;
+  condition?: string;
+  temp_range?: string;
 }
 
 export interface NextService {
-  component: string;
-  bike_name: string;
+  component_type: string;
+  bike: string;
+  brand?: string;
+  model?: string;
   wear_pct: number;
-  km_remaining: number;
+  km_remaining?: number;
   status: string;
 }
 

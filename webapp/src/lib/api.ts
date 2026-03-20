@@ -20,8 +20,15 @@ import type {
   WeatherForecast,
 } from "./types";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+function getApiBase(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+  if (typeof window !== "undefined") {
+    return `http://${window.location.hostname}:8001/api/v1`;
+  }
+  return "http://localhost:8001/api/v1";
+}
+
+const API_BASE = getApiBase();
 
 class ApiError extends Error {
   code: string;
