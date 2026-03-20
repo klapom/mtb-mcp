@@ -38,6 +38,11 @@ Logging: structlog
 Docker: BRouter (17777) + SearXNG (17888)
 Testing: pytest + respx (httpx mocking)
 Quality: Ruff + MyPy (strict)
+
+Frontend: Next.js 16, React 19, TypeScript
+Styling: Tailwind CSS v4 (@theme inline in globals.css)
+Data Fetching: SWR (useApi hook)
+E2E Testing: Playwright
 ```
 
 ---
@@ -46,20 +51,64 @@ Quality: Ruff + MyPy (strict)
 
 ### Quick Commands
 ```bash
+# Backend
 make dev          # Install + dev deps + pre-commit hooks
 make run          # Start MCP server (stdio)
 make test-unit    # Run unit tests
+make test-api     # API integration tests
 make lint         # Ruff check
 make type-check   # MyPy strict
 make quality      # lint + type-check
 make docker-up    # Start BRouter + SearXNG
+
+# Frontend (webapp/)
+make webapp-install  # npm install
+make webapp-dev      # Next.js dev server (port 3000)
+make webapp-build    # Production build
+make webapp-test     # Playwright E2E tests
+
+# Combined
+make test-all     # unit + api + e2e
 ```
 
 ### Code Quality
 - **1 Feature = 1 Commit** (Atomic Rollbacks)
-- `make quality` before every commit
+- `make quality` before every commit (Backend)
+- `cd webapp && npx next build` before every commit (Frontend)
 - Ruff line-length=100, select E/W/F/I/B/SIM
 - MyPy strict mode
+
+### Frontend Architecture (webapp/)
+
+```
+webapp/src/
+  app/                    # Next.js App Router (file-based routing)
+    layout.tsx            # Shell: Header + BottomNav + Dark Theme
+    page.tsx              # Dashboard
+    weather/page.tsx      # Forecast, Radar, Alerts, History
+    trails/page.tsx       # Trail search + filter chips
+    trails/[osmId]/       # Trail detail
+    tours/page.tsx        # Tour search + radius slider
+    tours/[source]/[id]/  # Tour detail + GPX download
+    bike/page.tsx         # Bike Garage CRUD
+    training/page.tsx     # CTL/ATL/TSB + Goals + Plans
+    ebike/page.tsx        # Range Check calculator
+    safety/page.tsx       # Safety Timer CRUD
+  components/             # Shared React components
+    ui/                   # Primitives (Card, Badge, Modal, etc.)
+  lib/
+    api.ts                # Typed fetch() wrapper → FastAPI :8000
+    types.ts              # TypeScript interfaces (from API_SPEC.md)
+  hooks/
+    useApi.ts             # SWR-based data fetching hook
+  e2e/                    # Playwright test specs (9 files, ~47 tests)
+```
+
+**Key patterns:**
+- All pages are `'use client'` components using `useApi()` hook
+- API client at `lib/api.ts` wraps `fetch()` with typed response envelope
+- Design tokens in `globals.css` via Tailwind v4 `@theme inline`
+- Dark theme: bg-bg-primary (#0f0f1e), bg-bg-card (#1a1a2e)
 
 ### MCP Tool Pattern
 ```python
@@ -79,6 +128,22 @@ class MyClient(BaseClient):
     async def fetch_data(self) -> dict:
         return await self._get("/endpoint")
 ```
+
+---
+
+## Test Pyramid
+
+| Tier | Location | Count | Framework |
+|------|----------|-------|-----------|
+| Unit | `tests/unit/` | 939+ | pytest + respx |
+| API Integration | `tests/integration/` | 32 | pytest + httpx ASGI |
+| E2E | `webapp/e2e/` | 47 | Playwright |
+
+**API Integration Tests** use `httpx.ASGITransport` to test FastAPI endpoints
+in-process (no server needed). External APIs mocked via `unittest.mock.patch`.
+
+**E2E Tests** use Playwright route interception (`page.route()`) to mock API
+responses. Next.js dev server starts automatically via `playwright.config.ts`.
 
 ---
 

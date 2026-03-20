@@ -1,4 +1,4 @@
-.PHONY: help install dev run test test-unit test-integration lint lint-fix format type-check quality clean docker-up docker-down docker-logs
+.PHONY: help install dev run test test-unit test-integration test-api test-all lint lint-fix format type-check quality clean docker-up docker-down docker-logs webapp-install webapp-dev webapp-build webapp-test
 
 help:  ## Show this help message
 	@echo "MTB MCP Server — Development Commands"
@@ -86,6 +86,34 @@ docker-ps:  ## Show Docker service status
 
 docker-clean:  ## Remove containers and volumes
 	docker compose down -v
+
+# ============================================================================
+# Frontend (Next.js)
+# ============================================================================
+
+webapp-install:  ## Install Next.js dependencies
+	cd webapp && npm install
+
+webapp-dev:  ## Run Next.js dev server
+	cd webapp && npm run dev
+
+webapp-build:  ## Build static export
+	cd webapp && npm run build
+
+webapp-test:  ## Run Playwright E2E tests
+	cd webapp && npx playwright test
+
+# ============================================================================
+# Combined Test Targets
+# ============================================================================
+
+test-api:  ## API Integration Tests
+	poetry run pytest tests/integration/ -v
+
+test-all:  ## Run all test tiers
+	$(MAKE) test-unit
+	$(MAKE) test-api
+	$(MAKE) webapp-test
 
 # ============================================================================
 # Cleanup

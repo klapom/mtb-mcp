@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-bg-primary: #0f0f1e;
+  --color-bg-card: #1a1a2e;
+  --color-bg-card-hover: #1e2340;
+  --color-bg-input: #12122a;
+  --color-accent-green: #0f9b58;
+  --color-accent-orange: #f39c12;
+  --color-accent-red: #e74c3c;
+  --color-accent-blue: #2196f3;
+  --color-text-primary: #e0e0e0;
+  --color-text-secondary: #8892a0;
+  --color-text-muted: #5a6270;
+  --color-s0: #4caf50;
+  --color-s1: #2196f3;
+  --color-s2: #ff9800;
+  --color-s3: #f44336;
+  --color-border-subtle: rgba(255, 255, 255, 0.06);
+  --color-border-card: rgba(255, 255, 255, 0.08);
+}
+
+:root {
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --nav-height: 64px;
+  --header-height: 56px;
+}
+
+html {
+  font-size: 14px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, sans-serif;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+/* Animations */
+@keyframes screenIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes modalIn {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes menuIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Progress bar gradients */
+.progress-green {
+  background: linear-gradient(90deg, #0f9b58, #4ade80);
+}
+.progress-yellow {
+  background: linear-gradient(90deg, #f39c12, #fbbf24);
+}
+.progress-red {
+  background: linear-gradient(90deg, #e74c3c, #f87171);
+}
+
+/* Gauge animation */
+.gauge-fill {
+  transition: stroke-dashoffset 1s ease, stroke 0.3s ease;
+}
