@@ -118,7 +118,7 @@ export const Bikes = {
 // ── Training ───────────────────────────────────────────────────────
 
 export const Training = {
-  status: () => api<TrainingStatus>("/training/fitness"),
+  status: () => api<TrainingStatus>("/training/status"),
   goals: () => api<TrainingGoal[]>("/training/goals"),
   plan: (goalId: string) => api<TrainingPlan>(`/training/goals/${goalId}/plan`),
   readiness: () => api<RaceReadiness>("/training/race-readiness"),

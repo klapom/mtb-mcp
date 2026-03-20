@@ -171,35 +171,37 @@ function RainHistorySection() {
   if (error) return <ErrorState message={error.message} onRetry={() => mutate()} />;
   if (!data) return null;
 
-  const maxPrecip = Math.max(...data.hours.map((h) => h.precipitation_mm), 1);
+  // API may return hourly_mm (flat array) or hours (object array)
+  const bars: number[] = data.hourly_mm ?? data.hours?.map((h) => h.precipitation_mm) ?? [];
+  const totalMm = data.total_mm_48h ?? data.total_mm ?? 0;
+  const maxPrecip = Math.max(...bars, 1);
 
   return (
     <Card>
       <CardHeader title="Regenverlauf (48h)" />
       <p className="text-sm text-text-primary mb-3">
         Gesamt:{" "}
-        <span className="font-bold text-accent-blue">{data.total_mm} mm</span>
+        <span className="font-bold text-accent-blue">{totalMm} mm</span>
       </p>
       <div className="overflow-x-auto pb-2">
         <div className="flex items-end gap-[2px] h-20 min-w-max">
-          {data.hours.map((h, idx) => {
-            const heightPct = (h.precipitation_mm / maxPrecip) * 100;
-            const hour = new Date(h.time).getHours();
-            const showLabel = hour % 6 === 0;
+          {bars.map((mm, idx) => {
+            const heightPct = (mm / maxPrecip) * 100;
+            const showLabel = idx % 6 === 0;
 
             return (
               <div key={idx} className="flex flex-col items-center w-3">
                 <div
                   className="w-full bg-accent-blue/60 rounded-t-sm transition-[height] duration-300"
                   style={{
-                    height: `${Math.max(heightPct, h.precipitation_mm > 0 ? 4 : 0)}%`,
-                    minHeight: h.precipitation_mm > 0 ? "2px" : "0px",
+                    height: `${Math.max(heightPct, mm > 0 ? 4 : 0)}%`,
+                    minHeight: mm > 0 ? "2px" : "0px",
                   }}
-                  title={`${h.time}: ${h.precipitation_mm} mm`}
+                  title={`${mm} mm`}
                 />
                 {showLabel && (
                   <span className="text-[8px] text-text-muted mt-1">
-                    {hour}h
+                    {idx}h
                   </span>
                 )}
               </div>

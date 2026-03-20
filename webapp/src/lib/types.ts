@@ -122,8 +122,10 @@ export interface WeatherAlert {
 export interface RainHistory {
   lat: number;
   lon: number;
-  total_mm: number;
-  hours: { time: string; precipitation_mm: number }[];
+  total_mm?: number;
+  total_mm_48h?: number;
+  hours?: { time: string; precipitation_mm: number }[];
+  hourly_mm?: number[];
 }
 
 // ── Trails ─────────────────────────────────────────────────────────
@@ -152,12 +154,15 @@ export interface TourSummary {
   id: string;
   source: string;
   name: string;
-  distance_km: number;
-  elevation_up_m: number;
-  elevation_down_m: number;
-  duration_minutes: number;
-  difficulty: string;
-  sport: string;
+  distance_km: number | null;
+  elevation_m: number | null;
+  elevation_up_m?: number | null;
+  elevation_down_m?: number | null;
+  duration_minutes?: number | null;
+  difficulty: string | null;
+  region?: string | null;
+  sport?: string;
+  url?: string;
   image_url?: string;
 }
 
@@ -206,10 +211,15 @@ export interface TrainingStatus {
 export interface TrainingGoal {
   id: string;
   name: string;
-  target_date: string;
-  goal_type: string;
-  status: string;
-  progress_pct: number;
+  type?: string;
+  target_date?: string;
+  goal_type?: string;
+  status?: string;
+  progress_pct?: number;
+  target_distance_km?: number | null;
+  target_elevation_m?: number | null;
+  target_ctl?: number | null;
+  description?: string | null;
 }
 
 export interface TrainingPlan {

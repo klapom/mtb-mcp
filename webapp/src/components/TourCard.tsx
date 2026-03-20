@@ -22,9 +22,15 @@ export function TourCard({ tour }: { tour: TourSummary }) {
         </Badge>
       </div>
       <div className="flex gap-4 text-xs text-text-secondary">
-        <span data-testid="tour-distance">{tour.distance_km.toFixed(1)} km</span>
-        <span data-testid="tour-elevation">↑ {tour.elevation_up_m} m</span>
-        <span data-testid="tour-duration">{formatDuration(tour.duration_minutes)}</span>
+        {tour.distance_km != null && (
+          <span data-testid="tour-distance">{tour.distance_km.toFixed(1)} km</span>
+        )}
+        {(tour.elevation_up_m ?? tour.elevation_m) != null && (
+          <span data-testid="tour-elevation">↑ {tour.elevation_up_m ?? tour.elevation_m} m</span>
+        )}
+        {tour.duration_minutes != null && (
+          <span data-testid="tour-duration">{formatDuration(tour.duration_minutes)}</span>
+        )}
       </div>
     </Link>
   );
