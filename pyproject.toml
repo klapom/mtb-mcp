@@ -44,6 +44,10 @@ lxml = "^5.0.0"
 stravalib = "^2.0.0"
 kompy = "^0.0.12"
 
+# REST API
+fastapi = "^0.115.0"
+uvicorn = {extras = ["standard"], version = "^0.42.0"}
+
 # ============================================================================
 # OPTIONAL GROUPS
 # ============================================================================
@@ -121,6 +125,7 @@ module = [
     "bs4.*",
     "lxml.*",
     "aiosqlite.*",
+    "uvicorn.*",
 ]
 ignore_missing_imports = true
 
