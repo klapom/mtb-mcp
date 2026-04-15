@@ -73,6 +73,7 @@ async def health() -> dict[str, str]:
 # ── Register route modules ──────────────────────────────────────────
 
 from mtb_mcp.api.routes import (  # noqa: E402
+    auth,
     bikes,
     dashboard,
     ebike,
@@ -83,19 +84,27 @@ from mtb_mcp.api.routes import (  # noqa: E402
     system,
     tours,
     trails,
+    trainer,
     training,
     weather,
 )
 
+# Auth routes (no prefix — /auth/*)
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(trainer.router, prefix="/api/v1/trainer", tags=["trainer"])
+
+# Public routes (no auth required)
 app.include_router(weather.router, prefix="/api/v1/weather", tags=["weather"])
 app.include_router(trails.router, prefix="/api/v1/trails", tags=["trails"])
 app.include_router(tours.router, prefix="/api/v1/tours", tags=["tours"])
 app.include_router(routing.router, prefix="/api/v1/routing", tags=["routing"])
 app.include_router(intelligence.router, prefix="/api/v1/intelligence", tags=["intelligence"])
+app.include_router(ebike.router, prefix="/api/v1/ebike", tags=["ebike"])
+app.include_router(system.router, prefix="/api/v1/system", tags=["system"])
+
+# Protected routes (auth required via Depends(get_current_user))
 app.include_router(strava.router, prefix="/api/v1/strava", tags=["strava"])
 app.include_router(bikes.router, prefix="/api/v1/bikes", tags=["bikes"])
 app.include_router(training.router, prefix="/api/v1/training", tags=["training"])
-app.include_router(ebike.router, prefix="/api/v1/ebike", tags=["ebike"])
 app.include_router(safety.router, prefix="/api/v1/safety", tags=["safety"])
 app.include_router(dashboard.router, prefix="/api/v1", tags=["dashboard"])
-app.include_router(system.router, prefix="/api/v1/system", tags=["system"])

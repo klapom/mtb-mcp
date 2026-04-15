@@ -10,6 +10,7 @@ from unittest.mock import patch
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from mtb_mcp.auth.jwt import create_access_token
 from mtb_mcp.config import Settings
 from mtb_mcp.models.common import GeoPoint
 from mtb_mcp.models.tour import TourDetail, TourDifficulty, TourSource, TourSummary
@@ -23,15 +24,22 @@ from mtb_mcp.models.weather import (
     WeatherForecast,
 )
 from mtb_mcp.storage.database import Database
+from mtb_mcp.storage.user_store import UserStore
+
+# Test JWT secret
+_TEST_JWT_SECRET = "test-secret-for-integration-tests-only"
 
 # All modules that import get_cached_settings via
 # ``from mtb_mcp.api.deps import get_cached_settings``
 _SETTINGS_PATCH_TARGETS = [
     "mtb_mcp.api.deps.get_cached_settings",
+    "mtb_mcp.auth.dependencies.get_cached_settings",
+    "mtb_mcp.api.routes.auth.get_cached_settings",
     "mtb_mcp.api.routes.bikes.get_cached_settings",
     "mtb_mcp.api.routes.dashboard.get_cached_settings",
     "mtb_mcp.api.routes.safety.get_cached_settings",
     "mtb_mcp.api.routes.tours.get_cached_settings",
+    "mtb_mcp.api.routes.trainer.get_cached_settings",
     "mtb_mcp.api.routes.training.get_cached_settings",
     "mtb_mcp.api.routes.system.get_cached_settings",
     "mtb_mcp.api.routes.strava.get_cached_settings",
@@ -53,6 +61,7 @@ def _make_test_settings(tmp_path: Path) -> Settings:
         db_path=str(db_path),
         home_lat=49.59,
         home_lon=11.00,
+        jwt_secret=_TEST_JWT_SECRET,
         komoot_email="test@example.com",
         komoot_password="secret",
         searxng_url="http://localhost:17888",
@@ -116,6 +125,38 @@ async def api_client_with_db(tmp_path: Path) -> AsyncGenerator[AsyncClient, None
 
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
+            yield client
+
+
+@pytest.fixture
+async def authed_client(tmp_path: Path) -> AsyncGenerator[AsyncClient, None]:
+    """API client with an authenticated test user (JWT in headers)."""
+    test_settings = _make_test_settings(tmp_path)
+
+    # Pre-initialise the database and create a test user
+    db = Database(test_settings.resolved_db_path)
+    await db.initialize()
+    store = UserStore(db)
+    user = await store.create_user(
+        display_name="Test Rider",
+        email="rider@example.com",
+        password="testpass123",
+    )
+    await store.complete_onboarding(user.id, 49.59, 11.00)
+    await db.close()
+
+    # Create a JWT for the test user
+    token = create_access_token(user.id, _TEST_JWT_SECRET)
+
+    with _apply_settings_patches(test_settings):
+        from mtb_mcp.api.main import app
+
+        transport = ASGITransport(app=app)
+        async with AsyncClient(
+            transport=transport,
+            base_url="http://test",
+            headers={"Authorization": f"Bearer {token}"},
+        ) as client:
             yield client
 
 

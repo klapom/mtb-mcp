@@ -17,6 +17,7 @@
 |-----------|------------|-------|
 | MCP Server | FastMCP (Python) | Tool-Definitionen via @mcp.tool() |
 | Transport | stdio | Via NanoClaw/mcporter |
+| Auth | JWT + bcrypt + Fernet | Multi-User, Strava OAuth, Email/PW |
 | Wetter | DWD OpenData | Forecast, Regenradar, Alerts |
 | Trails | OSM Overpass | MTB Trail-Katalog |
 | Touren | Komoot + GPS-Tour.info | Multi-Source Tour-Suche |
@@ -24,6 +25,7 @@
 | Routing | BRouter (self-hosted) | MTB-optimierte Routen |
 | Storage | SQLite (aiosqlite) | Bike Garage, Cache, History |
 | Intelligence | Custom Algorithmen | Ride Score, Wear Engine, Trail Condition |
+| Trainer | Invite-Links + Roles | Trainer sieht Athleten-Daten read-only |
 
 ---
 
@@ -34,6 +36,7 @@ Backend: Python 3.12+, Poetry, FastMCP
 HTTP: httpx + tenacity (retry)
 Models: Pydantic v2 + pydantic-settings
 Storage: SQLite via aiosqlite (~/.mtb-mcp/mtb.db)
+Auth: PyJWT (HS256) + bcrypt + Fernet (token encryption)
 Logging: structlog
 Docker: BRouter (17777) + SearXNG (17888)
 Testing: pytest + respx (httpx mocking)
@@ -42,6 +45,7 @@ Quality: Ruff + MyPy (strict)
 Frontend: Next.js 16, React 19, TypeScript
 Styling: Tailwind CSS v4 (@theme inline in globals.css)
 Data Fetching: SWR (useApi hook)
+Auth: AuthContext + localStorage JWT + 401 auto-refresh
 E2E Testing: Playwright
 ```
 
@@ -83,21 +87,31 @@ make test-all     # unit + api + e2e
 ```
 webapp/src/
   app/                    # Next.js App Router (file-based routing)
-    layout.tsx            # Shell: Header + BottomNav + Dark Theme
-    page.tsx              # Dashboard
+    layout.tsx            # Shell: AuthProvider + Header + BottomNav
+    page.tsx              # Dashboard (auth required)
+    login/page.tsx        # Strava OAuth + Email/PW Login
+    register/page.tsx     # Email/PW Registration
+    auth/callback/page.tsx # Strava OAuth callback handler
+    setup/page.tsx        # Onboarding: Location + first Bike
+    profile/page.tsx      # User profile, Strava status, Trainer invite
+    trainer/page.tsx      # "Meine Athleten" list
+    trainer/[athleteId]/  # Athlete detail (read-only fitness/goals)
     weather/page.tsx      # Forecast, Radar, Alerts, History
     trails/page.tsx       # Trail search + filter chips
     trails/[osmId]/       # Trail detail
     tours/page.tsx        # Tour search + radius slider
     tours/[source]/[id]/  # Tour detail + GPX download
-    bike/page.tsx         # Bike Garage CRUD
-    training/page.tsx     # CTL/ATL/TSB + Goals + Plans
+    bike/page.tsx         # Bike Garage CRUD (auth required)
+    training/page.tsx     # CTL/ATL/TSB + Goals + Plans (auth required)
     ebike/page.tsx        # Range Check calculator
-    safety/page.tsx       # Safety Timer CRUD
-  components/             # Shared React components
+    safety/page.tsx       # Safety Timer CRUD (auth required)
+  contexts/
+    AuthContext.tsx        # AuthProvider, useAuth() hook, JWT in localStorage
+  components/
+    ProtectedRoute.tsx     # Redirect to /login if !user
     ui/                   # Primitives (Card, Badge, Modal, etc.)
   lib/
-    api.ts                # Typed fetch() wrapper → FastAPI :8000
+    api.ts                # Typed fetch() + JWT header + 401 auto-refresh
     types.ts              # TypeScript interfaces (from API_SPEC.md)
   hooks/
     useApi.ts             # SWR-based data fetching hook
@@ -106,7 +120,9 @@ webapp/src/
 
 **Key patterns:**
 - All pages are `'use client'` components using `useApi()` hook
-- API client at `lib/api.ts` wraps `fetch()` with typed response envelope
+- API client at `lib/api.ts` wraps `fetch()` with JWT auth header + 401 refresh
+- `AuthProvider` in layout.tsx manages user session via localStorage
+- Protected pages wrapped with `<ProtectedRoute>` → redirect to /login
 - Design tokens in `globals.css` via Tailwind v4 `@theme inline`
 - Dark theme: bg-bg-primary (#0f0f1e), bg-bg-card (#1a1a2e)
 
@@ -163,10 +179,17 @@ responses. Next.js dev server starts automatically via `playwright.config.ts`.
 ## Environment Variables
 
 ```bash
+# Auth (required for multi-user)
+MTB_MCP_JWT_SECRET=               # HS256 secret
+MTB_MCP_TOKEN_ENCRYPTION_KEY=     # Fernet key for Strava token encryption
+MTB_MCP_STRAVA_OAUTH_REDIRECT_URI=http://localhost:3000/auth/callback
+
+# General
 MTB_MCP_LOG_LEVEL=INFO
 MTB_MCP_HOME_LAT=49.59      # Default search center
 MTB_MCP_HOME_LON=11.00
-MTB_MCP_STRAVA_CLIENT_ID=    # Strava OAuth
+MTB_MCP_STRAVA_CLIENT_ID=    # Strava OAuth (app-level)
+MTB_MCP_STRAVA_CLIENT_SECRET=
 MTB_MCP_KOMOOT_EMAIL=        # Komoot Basic Auth
 MTB_MCP_ORS_API_KEY=         # OpenRouteService
 MTB_MCP_BROUTER_URL=http://localhost:17777
@@ -174,6 +197,26 @@ MTB_MCP_SEARXNG_URL=http://localhost:17888
 ```
 
 See `.env.template` for all variables.
+
+### Auth Architecture
+
+| Endpoint | Auth | Beschreibung |
+|----------|------|-------------|
+| weather, trails, tours, routing, intelligence, ebike, system | Public | Kein Auth nötig |
+| bikes, training, safety, strava, dashboard | Protected | `Depends(get_current_user)` |
+| /auth/* | Mixed | Login/Register public, /me protected |
+| /trainer/* | Protected | Trainer-System mit Invite-Links |
+
+**Auth-Paket:** `src/mtb_mcp/auth/`
+- `jwt.py` — Access (60min) + Refresh (30d) Tokens, HS256
+- `encryption.py` — Fernet für Strava-Token-at-rest
+- `strava_oauth.py` — OAuth2 Code Exchange
+- `dependencies.py` — `get_current_user()` FastAPI Dependency
+- `models.py` — User, TokenPair, Request/Response Models
+
+**Storage:** `src/mtb_mcp/storage/user_store.py` — Users, Trainer Relations, Invites, Refresh Tokens
+
+**DB-Migrationen 10–15:** users, trainer_relationships, refresh_tokens, invite_links, user_id auf Datentabellen, fitness_snapshots composite PK
 
 ---
 

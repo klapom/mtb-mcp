@@ -9,7 +9,15 @@ const conditionDots: Record<string, string> = {
   muddy: "bg-s3",
 };
 
+const surfaceLabels: Record<string, string> = {
+  dirt: "Erde",
+  gravel: "Schotter",
+  rock: "Fels",
+  roots: "Wurzeln",
+};
+
 export function TrailCard({ trail }: { trail: Trail }) {
+  const scale = trail.mtb_scale || trail.difficulty || "?";
   const dot = trail.condition
     ? conditionDots[trail.condition.condition] ?? "bg-text-muted"
     : "bg-text-muted";
@@ -25,15 +33,15 @@ export function TrailCard({ trail }: { trail: Trail }) {
           {trail.name || `Trail ${trail.osm_id}`}
         </h3>
         <div className="flex items-center gap-2">
-          <Badge variant={trail.difficulty?.toLowerCase()}>
-            {trail.difficulty}
+          <Badge variant={scale.toLowerCase()}>
+            {scale}
           </Badge>
           <span className={`w-2.5 h-2.5 rounded-full ${dot}`} data-testid="condition-dot" />
         </div>
       </div>
       <div className="flex gap-4 text-xs text-text-secondary">
         <span>{(trail.length_m / 1000).toFixed(1)} km</span>
-        <span>{trail.surface}</span>
+        <span>{surfaceLabels[trail.surface] ?? trail.surface}</span>
       </div>
     </Link>
   );

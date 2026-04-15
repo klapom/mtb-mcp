@@ -387,27 +387,120 @@ class KomootClient(BaseClient):
         return results
 
     async def get_tour_details(self, tour_id: str) -> TourDetail | None:
-        """Get detailed tour information by tour ID."""
-        if not self._authenticated:
-            auth_ok = await self.authenticate()
-            if not auth_ok:
-                return None
+        """Get detailed tour information by tour ID.
 
+        Tries v007 API first, falls back to scraping the public smarttour page.
+        """
+        # Try v007 API first
+        if self._authenticated or await self.authenticate():
+            try:
+                await self._rate_limiter.acquire()
+                client = self._get_client()
+                response = await client.get(
+                    f"/v007/tours/{tour_id}",
+                    auth=(self._email or "", self._token or self._password or ""),
+                )
+                response.raise_for_status()
+                data = response.json()
+                return _parse_tour_detail(data)
+            except httpx.HTTPError:
+                logger.debug("komoot_v007_fallback", tour_id=tour_id)
+
+        # Fallback: scrape the public smarttour/tour page
+        return await self._scrape_tour_details(tour_id)
+
+    async def _scrape_tour_details(self, tour_id: str) -> TourDetail | None:
+        """Scrape tour details from public Komoot page."""
         try:
+            from bs4 import BeautifulSoup
+
             await self._rate_limiter.acquire()
             client = self._get_client()
 
-            response = await client.get(
-                f"/v007/tours/{tour_id}",
-                auth=(self._email or "", self._token or self._password or ""),
-            )
-            response.raise_for_status()
+            # Try smarttour URL first, then regular tour URL
+            for url_pattern in [
+                f"https://www.komoot.com/de-de/smarttour/{tour_id}",
+                f"https://www.komoot.com/de-de/tour/{tour_id}",
+            ]:
+                response = await client.get(
+                    url_pattern,
+                    headers={
+                        "User-Agent": "TrailPilot-MCP/0.1 (MTB route planner)",
+                        "Accept": "text/html",
+                    },
+                    follow_redirects=True,
+                )
+                if response.status_code != 200:
+                    continue
 
-            data = response.json()
-            return _parse_tour_detail(data)
+                soup = BeautifulSoup(response.text, "lxml")
+                for script in soup.find_all("script", type="application/ld+json"):
+                    if not script.string:
+                        continue
+                    data = json.loads(script.string)
+                    types = data.get("@type", [])
+                    if isinstance(types, str):
+                        types = [types]
+                    if "Trip" not in types:
+                        continue
 
-        except httpx.HTTPError as exc:
-            logger.warning("komoot_detail_error", tour_id=tour_id, error=str(exc))
+                    # Extract properties
+                    props: dict[str, str] = {}
+                    for prop in data.get("additionalProperty", []):
+                        name = prop.get("name", "")
+                        value = prop.get("value", "")
+                        if name and value:
+                            props[name] = value
+
+                    # Parse distance
+                    distance_km = None
+                    dist_raw = props.get("Distanz", "")
+                    if dist_raw:
+                        dist_clean = dist_raw.replace(",", ".").replace("\xa0", "").strip()
+                        dist_match = re.search(r"([\d.]+)", dist_clean)
+                        if dist_match:
+                            distance_km = float(dist_match.group(1))
+
+                    # Parse duration (PT4H41M format)
+                    duration_minutes = None
+                    dur_raw = props.get("Dauer", "")
+                    if dur_raw:
+                        h_match = re.search(r"(\d+)H", dur_raw)
+                        m_match = re.search(r"(\d+)M", dur_raw)
+                        hours = int(h_match.group(1)) if h_match else 0
+                        mins = int(m_match.group(1)) if m_match else 0
+                        duration_minutes = hours * 60 + mins
+
+                    # Parse difficulty
+                    diff_raw = props.get("Schwierigkeit", "").lower()
+                    diff_map = {
+                        "leicht": TourDifficulty.easy,
+                        "mittel": TourDifficulty.moderate,
+                        "schwierig": TourDifficulty.difficult,
+                        "schwer": TourDifficulty.difficult,
+                    }
+                    difficulty = diff_map.get(diff_raw)
+
+                    tour_url = data.get("url", url_pattern)
+
+                    logger.info("komoot_smarttour_scraped", tour_id=tour_id, name=data.get("name"))
+
+                    return TourDetail(
+                        id=tour_id,
+                        source=TourSource.komoot,
+                        name=data.get("name", f"Tour {tour_id}"),
+                        distance_km=distance_km,
+                        difficulty=difficulty,
+                        description=data.get("description", ""),
+                        url=tour_url if tour_url.startswith("http") else f"https://www.komoot.com{tour_url}",
+                        duration_minutes=duration_minutes,
+                    )
+
+            logger.warning("komoot_scrape_no_data", tour_id=tour_id)
+            return None
+
+        except Exception as exc:
+            logger.warning("komoot_scrape_error", tour_id=tour_id, error=str(exc))
             return None
 
     async def download_gpx(self, tour_id: str) -> bytes | None:

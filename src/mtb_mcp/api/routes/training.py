@@ -6,11 +6,13 @@ from datetime import date
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 
 from mtb_mcp.api.deps import get_cached_settings
 from mtb_mcp.api.models import err, ok, ok_list
+from mtb_mcp.auth.dependencies import get_current_user
+from mtb_mcp.auth.models import User
 from mtb_mcp.intelligence.fitness_tracker import (
     check_alpencross_readiness,
     check_xc_readiness,
@@ -61,11 +63,11 @@ async def _get_store() -> tuple[Database, TrainingStore]:
 
 
 async def _resolve_goal(
-    store: TrainingStore, goal_name: str | None,
+    store: TrainingStore, goal_name: str | None, user_id: str | None = None,
 ) -> TrainingGoal | None:
     if goal_name is not None:
-        return await store.get_goal_by_name(goal_name)
-    goals = await store.get_active_goals()
+        return await store.get_goal_by_name(goal_name, user_id=user_id)
+    goals = await store.get_active_goals(user_id=user_id)
     if goals:
         return goals[0]
     return None
@@ -76,7 +78,7 @@ async def _resolve_goal(
 # ---------------------------------------------------------------------------
 
 @router.post("/goals")
-async def create_goal(body: CreateGoalRequest) -> dict[str, Any]:
+async def create_goal(body: CreateGoalRequest, user: User = Depends(get_current_user)) -> dict[str, Any]:
     """Create a training goal and generate a periodized plan."""
     t = time.monotonic()
 
@@ -100,7 +102,7 @@ async def create_goal(body: CreateGoalRequest) -> dict[str, Any]:
     try:
         db, store = await _get_store()
 
-        latest = await store.get_latest_snapshot()
+        latest = await store.get_latest_snapshot(user_id=user.id)
         current_ctl = latest.ctl if latest else 30.0
 
         goal = await store.add_goal(
@@ -110,6 +112,7 @@ async def create_goal(body: CreateGoalRequest) -> dict[str, Any]:
             target_distance_km=body.target_distance_km,
             target_elevation_m=body.target_elevation_m,
             description=body.description,
+            user_id=user.id,
         )
 
         plan = generate_training_plan(goal, current_ctl=current_ctl)
@@ -143,13 +146,13 @@ async def create_goal(body: CreateGoalRequest) -> dict[str, Any]:
 
 
 @router.get("/goals")
-async def list_goals() -> dict[str, Any]:
+async def list_goals(user: User = Depends(get_current_user)) -> dict[str, Any]:
     """List all active training goals."""
     t = time.monotonic()
     db: Database | None = None
     try:
         db, store = await _get_store()
-        goals = await store.get_active_goals()
+        goals = await store.get_active_goals(user_id=user.id)
         return ok_list(
             [g.model_dump(mode="json") for g in goals],
             len(goals),
@@ -164,15 +167,15 @@ async def list_goals() -> dict[str, Any]:
 
 
 @router.get("/status")
-async def training_status() -> dict[str, Any]:
+async def training_status(user: User = Depends(get_current_user)) -> dict[str, Any]:
     """Current training status (CTL/ATL/TSB, weekly volume)."""
     t = time.monotonic()
     db: Database | None = None
     try:
         db, store = await _get_store()
 
-        latest = await store.get_latest_snapshot()
-        goals = await store.get_active_goals()
+        latest = await store.get_latest_snapshot(user_id=user.id)
+        goals = await store.get_active_goals(user_id=user.id)
 
         if latest is None:
             goal_items = []
@@ -233,6 +236,7 @@ async def training_status() -> dict[str, Any]:
 @router.get("/plan")
 async def training_plan(
     goal_name: str | None = Query(None),
+    user: User = Depends(get_current_user),
 ) -> dict[str, Any]:
     """Get training plan weeks for a goal."""
     t = time.monotonic()
@@ -240,7 +244,7 @@ async def training_plan(
     try:
         db, store = await _get_store()
 
-        goal = await _resolve_goal(store, goal_name)
+        goal = await _resolve_goal(store, goal_name, user_id=user.id)
         if goal is None:
             return err("NOT_FOUND", "No training goal found. Create one first.")
 
@@ -286,6 +290,7 @@ async def training_plan(
 @router.get("/trend")
 async def fitness_trend(
     days: int = Query(90, ge=1, le=365),
+    user: User = Depends(get_current_user),
 ) -> dict[str, Any]:
     """Fitness trend snapshots over time."""
     t = time.monotonic()
@@ -293,7 +298,7 @@ async def fitness_trend(
     try:
         db, store = await _get_store()
 
-        snapshots = await store.get_snapshots(days=days)
+        snapshots = await store.get_snapshots(days=days, user_id=user.id)
         if not snapshots:
             return ok(
                 {
@@ -340,6 +345,7 @@ async def fitness_trend(
 @router.get("/readiness")
 async def race_readiness(
     goal_name: str | None = Query(None),
+    user: User = Depends(get_current_user),
 ) -> dict[str, Any]:
     """Race readiness check for an upcoming goal."""
     t = time.monotonic()
@@ -347,15 +353,15 @@ async def race_readiness(
     try:
         db, store = await _get_store()
 
-        goal = await _resolve_goal(store, goal_name)
+        goal = await _resolve_goal(store, goal_name, user_id=user.id)
         if goal is None:
             return err("NOT_FOUND", "No training goal found. Create one first.")
 
-        latest = await store.get_latest_snapshot()
+        latest = await store.get_latest_snapshot(user_id=user.id)
         if latest is None:
             return err("NO_DATA", "No fitness data yet. Log rides to assess readiness.")
 
-        snapshots = await store.get_snapshots(days=90)
+        snapshots = await store.get_snapshots(days=90, user_id=user.id)
 
         weekly_elevations = [s.weekly_elevation_m for s in snapshots if s.weekly_elevation_m > 0]
         longest_rides = [s.weekly_km for s in snapshots if s.weekly_km > 0]
@@ -400,7 +406,7 @@ async def race_readiness(
 
 
 @router.post("/plan/adjust")
-async def adjust_training(body: AdjustPlanRequest) -> dict[str, Any]:
+async def adjust_training(body: AdjustPlanRequest, user: User = Depends(get_current_user)) -> dict[str, Any]:
     """Adjust training plan for illness, vacation, or overtraining."""
     t = time.monotonic()
 
@@ -417,7 +423,7 @@ async def adjust_training(body: AdjustPlanRequest) -> dict[str, Any]:
     try:
         db, store = await _get_store()
 
-        goal = await _resolve_goal(store, body.goal_name)
+        goal = await _resolve_goal(store, body.goal_name, user_id=user.id)
         if goal is None:
             return err("NOT_FOUND", "No training goal found. Create one first.")
 
@@ -458,6 +464,7 @@ async def adjust_training(body: AdjustPlanRequest) -> dict[str, Any]:
 @router.get("/suggestions")
 async def weekly_suggestions(
     goal_name: str | None = Query(None),
+    user: User = Depends(get_current_user),
 ) -> dict[str, Any]:
     """Weekly ride suggestions based on current training plan."""
     t = time.monotonic()
@@ -465,7 +472,7 @@ async def weekly_suggestions(
     try:
         db, store = await _get_store()
 
-        goal = await _resolve_goal(store, goal_name)
+        goal = await _resolve_goal(store, goal_name, user_id=user.id)
         if goal is None:
             return err("NOT_FOUND", "No training goal found. Create one first.")
 

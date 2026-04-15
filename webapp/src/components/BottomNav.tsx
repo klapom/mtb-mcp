@@ -1,29 +1,38 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const tabs = [
-  { href: "/", icon: "🏠", label: "Home" },
-  { href: "/tours", icon: "🗺️", label: "Touren" },
-  { href: "/trails", icon: "🌲", label: "Trails" },
-  { href: "/weather", icon: "⛅", label: "Wetter" },
-];
-
-const moreItems = [
-  { href: "/bike", icon: "🔧", label: "Bike" },
-  { href: "/training", icon: "💪", label: "Training" },
-  { href: "/ebike", icon: "🔋", label: "eBike" },
-  { href: "/safety", icon: "⏱️", label: "Sicherheit" },
+  { href: '/', icon: '🏠', label: 'Home' },
+  { href: '/trails', icon: '🗺️', label: 'Entdecken' },
+  { href: '/weather', icon: '⛅', label: 'Wetter' },
 ];
 
 export function BottomNav() {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
+  const { user } = useAuth();
+
+  // Don't show nav on auth pages
+  if (pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/auth/') || pathname.startsWith('/setup')) {
+    return null;
+  }
+
+  const moreItems = [
+    { href: '/bike', icon: '🔧', label: 'Bike' },
+    { href: '/training', icon: '💪', label: 'Training' },
+    { href: '/ebike', icon: '🔋', label: 'eBike' },
+    { href: '/safety', icon: '⏱️', label: 'Sicherheit' },
+    { href: '/profile', icon: '👤', label: 'Profil' },
+    // Show trainer link if user exists (they might have athletes)
+    ...(user ? [{ href: '/trainer', icon: '🏋️', label: 'Trainer' }] : []),
+  ];
 
   const isActive = (href: string) =>
-    href === "/" ? pathname === "/" : pathname.startsWith(href);
+    href === '/' ? pathname === '/' : pathname.startsWith(href);
 
   const isMoreActive = moreItems.some((item) => isActive(item.href));
 
@@ -46,7 +55,7 @@ export function BottomNav() {
               href={item.href}
               onClick={() => setMoreOpen(false)}
               className={`flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors hover:bg-white/5 ${
-                isActive(item.href) ? "text-accent-green" : "text-text-primary"
+                isActive(item.href) ? 'text-accent-green' : 'text-text-primary'
               }`}
             >
               <span className="text-lg w-6 text-center">{item.icon}</span>
@@ -64,7 +73,7 @@ export function BottomNav() {
               key={tab.href}
               href={tab.href}
               className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] transition-colors relative py-1.5 active:scale-[0.92] ${
-                isActive(tab.href) ? "text-accent-green" : "text-text-muted"
+                isActive(tab.href) ? 'text-accent-green' : 'text-text-muted'
               }`}
             >
               {isActive(tab.href) && (
@@ -77,7 +86,7 @@ export function BottomNav() {
           <button
             onClick={() => setMoreOpen(!moreOpen)}
             className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] transition-colors relative py-1.5 active:scale-[0.92] ${
-              isMoreActive ? "text-accent-green" : "text-text-muted"
+              isMoreActive ? 'text-accent-green' : 'text-text-muted'
             }`}
           >
             {isMoreActive && (

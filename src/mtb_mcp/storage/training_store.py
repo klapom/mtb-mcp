@@ -49,6 +49,7 @@ class TrainingStore:
         target_elevation_m: float | None = None,
         target_ctl: int | None = None,
         description: str | None = None,
+        user_id: str | None = None,
     ) -> TrainingGoal:
         """Add a new training goal.
 
@@ -60,6 +61,7 @@ class TrainingStore:
             target_elevation_m: Target elevation in metres.
             target_ctl: Target CTL to achieve.
             description: Optional description.
+            user_id: Owner user ID.
 
         Returns:
             The newly created TrainingGoal.
@@ -71,11 +73,12 @@ class TrainingStore:
         await self._db.execute_and_commit(
             "INSERT INTO training_goals "
             "(id, name, type, target_date, target_distance_km, target_elevation_m, "
-            "target_ctl, description, status) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')",
+            "target_ctl, description, status, user_id) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)",
             (
                 goal_id, name, goal_type, target_date.isoformat(),
                 target_distance_km, target_elevation_m, target_ctl, description,
+                user_id,
             ),
         )
         logger.info("training_store.goal_added", goal_id=goal_id, name=name)
@@ -107,31 +110,50 @@ class TrainingStore:
             return None
         return _row_to_goal(row)
 
-    async def get_goal_by_name(self, name: str) -> TrainingGoal | None:
+    async def get_goal_by_name(
+        self, name: str, user_id: str | None = None,
+    ) -> TrainingGoal | None:
         """Get a training goal by name (case-insensitive).
 
         Args:
             name: Goal name to search for.
+            user_id: Owner filter.
 
         Returns:
             The TrainingGoal, or None if not found.
         """
-        row = await self._db.fetch_one(
-            "SELECT * FROM training_goals WHERE LOWER(name) = LOWER(?)", (name,),
-        )
+        if user_id is not None:
+            row = await self._db.fetch_one(
+                "SELECT * FROM training_goals WHERE LOWER(name) = LOWER(?) AND user_id = ?",
+                (name, user_id),
+            )
+        else:
+            row = await self._db.fetch_one(
+                "SELECT * FROM training_goals WHERE LOWER(name) = LOWER(?)", (name,),
+            )
         if row is None:
             return None
         return _row_to_goal(row)
 
-    async def get_active_goals(self) -> list[TrainingGoal]:
+    async def get_active_goals(self, user_id: str | None = None) -> list[TrainingGoal]:
         """Get all active training goals.
+
+        Args:
+            user_id: Owner filter.
 
         Returns:
             List of active TrainingGoal objects.
         """
-        rows = await self._db.fetch_all(
-            "SELECT * FROM training_goals WHERE status = 'active' ORDER BY target_date",
-        )
+        if user_id is not None:
+            rows = await self._db.fetch_all(
+                "SELECT * FROM training_goals WHERE status = 'active' AND user_id = ? "
+                "ORDER BY target_date",
+                (user_id,),
+            )
+        else:
+            rows = await self._db.fetch_all(
+                "SELECT * FROM training_goals WHERE status = 'active' ORDER BY target_date",
+            )
         return [_row_to_goal(row) for row in rows]
 
     async def update_goal_status(self, goal_id: str, status: str) -> None:
@@ -207,38 +229,51 @@ class TrainingStore:
     # Fitness Snapshots
     # -----------------------------------------------------------------------
 
-    async def save_snapshot(self, snapshot: FitnessSnapshot) -> None:
+    async def save_snapshot(
+        self, snapshot: FitnessSnapshot, user_id: str | None = None,
+    ) -> None:
         """Save (upsert) a fitness snapshot.
 
         Args:
             snapshot: The FitnessSnapshot to save.
+            user_id: Owner user ID.
         """
         await self._db.execute_and_commit(
             "INSERT OR REPLACE INTO fitness_snapshots "
-            "(date, ctl, atl, tsb, weekly_km, weekly_elevation_m, "
+            "(user_id, date, ctl, atl, tsb, weekly_km, weekly_elevation_m, "
             "weekly_hours, weekly_rides) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
-                snapshot.date.isoformat(), snapshot.ctl, snapshot.atl, snapshot.tsb,
+                user_id or "", snapshot.date.isoformat(),
+                snapshot.ctl, snapshot.atl, snapshot.tsb,
                 snapshot.weekly_km, snapshot.weekly_elevation_m,
                 snapshot.weekly_hours, snapshot.weekly_rides,
             ),
         )
 
-    async def get_snapshots(self, days: int = 90) -> list[FitnessSnapshot]:
+    async def get_snapshots(
+        self, days: int = 90, user_id: str | None = None,
+    ) -> list[FitnessSnapshot]:
         """Get fitness snapshots for the last N days.
 
         Args:
             days: Number of days to look back.
+            user_id: Owner filter.
 
         Returns:
             List of FitnessSnapshot objects, sorted by date.
         """
         since = (date.today() - timedelta(days=days)).isoformat()
-        rows = await self._db.fetch_all(
-            "SELECT * FROM fitness_snapshots WHERE date >= ? ORDER BY date",
-            (since,),
-        )
+        if user_id is not None:
+            rows = await self._db.fetch_all(
+                "SELECT * FROM fitness_snapshots WHERE date >= ? AND user_id = ? ORDER BY date",
+                (since, user_id),
+            )
+        else:
+            rows = await self._db.fetch_all(
+                "SELECT * FROM fitness_snapshots WHERE date >= ? ORDER BY date",
+                (since,),
+            )
         return [
             FitnessSnapshot(
                 date=date.fromisoformat(row["date"]),
@@ -253,15 +288,24 @@ class TrainingStore:
             for row in rows
         ]
 
-    async def get_latest_snapshot(self) -> FitnessSnapshot | None:
+    async def get_latest_snapshot(self, user_id: str | None = None) -> FitnessSnapshot | None:
         """Get the most recent fitness snapshot.
+
+        Args:
+            user_id: Owner filter.
 
         Returns:
             The most recent FitnessSnapshot, or None if no snapshots exist.
         """
-        row = await self._db.fetch_one(
-            "SELECT * FROM fitness_snapshots ORDER BY date DESC LIMIT 1",
-        )
+        if user_id is not None:
+            row = await self._db.fetch_one(
+                "SELECT * FROM fitness_snapshots WHERE user_id = ? ORDER BY date DESC LIMIT 1",
+                (user_id,),
+            )
+        else:
+            row = await self._db.fetch_one(
+                "SELECT * FROM fitness_snapshots ORDER BY date DESC LIMIT 1",
+            )
         if row is None:
             return None
         return FitnessSnapshot(

@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     home_lon: float = 11.00
     default_radius_km: float = 30.0
 
+    # Auth
+    jwt_secret: str = ""
+    token_encryption_key: str = ""
+    strava_oauth_redirect_uri: str = "http://localhost:3000/auth/callback"
+
     # Strava API
     strava_client_id: str | None = None
     strava_client_secret: str | None = None

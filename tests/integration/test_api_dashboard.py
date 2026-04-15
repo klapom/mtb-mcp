@@ -38,14 +38,14 @@ def _make_failing_dwd_cm():
 
 
 @pytest.mark.asyncio
-async def test_dashboard_full(api_client_with_db: AsyncClient) -> None:
+async def test_dashboard_full(authed_client: AsyncClient) -> None:
     """GET /api/v1/dashboard returns aggregated dashboard data."""
     forecast = make_hourly_forecast(hours=72)
     history = make_rain_history()
     dwd_cm = _make_dwd_cm(forecast, history)
 
     with patch("mtb_mcp.api.routes.dashboard.DWDClient", return_value=dwd_cm):
-        resp = await api_client_with_db.get(
+        resp = await authed_client.get(
             "/api/v1/dashboard", params={"lat": 49.59, "lon": 11.0}
         )
 
@@ -81,13 +81,13 @@ async def test_dashboard_full(api_client_with_db: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_dashboard_handles_missing_services(
-    api_client_with_db: AsyncClient,
+    authed_client: AsyncClient,
 ) -> None:
     """Dashboard gracefully handles DWD being unreachable."""
     dwd_cm = _make_failing_dwd_cm()
 
     with patch("mtb_mcp.api.routes.dashboard.DWDClient", return_value=dwd_cm):
-        resp = await api_client_with_db.get("/api/v1/dashboard")
+        resp = await authed_client.get("/api/v1/dashboard")
 
     assert resp.status_code == 200
     body = resp.json()

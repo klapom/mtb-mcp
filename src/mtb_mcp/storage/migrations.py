@@ -153,6 +153,111 @@ MIGRATIONS: list[tuple[int, str, str]] = [
         );
         """,
     ),
+    (
+        10,
+        "Create users table",
+        """
+        CREATE TABLE IF NOT EXISTS users (
+            id TEXT PRIMARY KEY,
+            email TEXT UNIQUE,
+            display_name TEXT NOT NULL,
+            avatar_url TEXT,
+            password_hash TEXT,
+            home_lat REAL,
+            home_lon REAL,
+            strava_athlete_id INTEGER UNIQUE,
+            strava_access_token_enc TEXT,
+            strava_refresh_token_enc TEXT,
+            strava_token_expires_at INTEGER DEFAULT 0,
+            onboarding_done BOOLEAN DEFAULT FALSE,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+        """,
+    ),
+    (
+        11,
+        "Create trainer_relationships table",
+        """
+        CREATE TABLE IF NOT EXISTS trainer_relationships (
+            id TEXT PRIMARY KEY,
+            rider_id TEXT NOT NULL REFERENCES users(id),
+            trainer_id TEXT NOT NULL REFERENCES users(id),
+            status TEXT DEFAULT 'pending',
+            ai_trainer BOOLEAN DEFAULT FALSE,
+            created_at TEXT NOT NULL,
+            UNIQUE(rider_id, trainer_id)
+        );
+        """,
+    ),
+    (
+        12,
+        "Create refresh_tokens table",
+        """
+        CREATE TABLE IF NOT EXISTS refresh_tokens (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL REFERENCES users(id),
+            token_hash TEXT NOT NULL UNIQUE,
+            expires_at TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            revoked BOOLEAN DEFAULT FALSE
+        );
+        """,
+    ),
+    (
+        13,
+        "Create invite_links table",
+        """
+        CREATE TABLE IF NOT EXISTS invite_links (
+            id TEXT PRIMARY KEY,
+            rider_id TEXT NOT NULL REFERENCES users(id),
+            token TEXT NOT NULL UNIQUE,
+            expires_at TEXT NOT NULL,
+            used_by TEXT REFERENCES users(id),
+            created_at TEXT NOT NULL
+        );
+        """,
+    ),
+    (
+        14,
+        "Add user_id to data tables",
+        """
+        ALTER TABLE bikes ADD COLUMN user_id TEXT;
+        ALTER TABLE components ADD COLUMN user_id TEXT;
+        ALTER TABLE service_log ADD COLUMN user_id TEXT;
+        ALTER TABLE safety_timers ADD COLUMN user_id TEXT;
+        ALTER TABLE training_goals ADD COLUMN user_id TEXT;
+        ALTER TABLE training_weeks ADD COLUMN user_id TEXT;
+        ALTER TABLE fitness_snapshots ADD COLUMN user_id TEXT;
+        CREATE INDEX idx_bikes_user ON bikes(user_id);
+        CREATE INDEX idx_training_goals_user ON training_goals(user_id);
+        CREATE INDEX idx_safety_timers_user ON safety_timers(user_id);
+        CREATE INDEX idx_fitness_snapshots_user ON fitness_snapshots(user_id);
+        """,
+    ),
+    (
+        15,
+        "Recreate fitness_snapshots with composite PK",
+        """
+        CREATE TABLE IF NOT EXISTS fitness_snapshots_new (
+            user_id TEXT NOT NULL,
+            date TEXT NOT NULL,
+            ctl REAL NOT NULL,
+            atl REAL NOT NULL,
+            tsb REAL NOT NULL,
+            weekly_km REAL DEFAULT 0,
+            weekly_elevation_m REAL DEFAULT 0,
+            weekly_hours REAL DEFAULT 0,
+            weekly_rides INTEGER DEFAULT 0,
+            PRIMARY KEY (user_id, date)
+        );
+        INSERT INTO fitness_snapshots_new (user_id, date, ctl, atl, tsb, weekly_km, weekly_elevation_m, weekly_hours, weekly_rides)
+            SELECT COALESCE(user_id, ''), date, ctl, atl, tsb, weekly_km, weekly_elevation_m, weekly_hours, weekly_rides
+            FROM fitness_snapshots;
+        DROP TABLE fitness_snapshots;
+        ALTER TABLE fitness_snapshots_new RENAME TO fitness_snapshots;
+        """,
+    ),
 ]
 
 

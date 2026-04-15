@@ -41,6 +41,7 @@ class BikeGarage:
         model: str | None = None,
         bike_type: str = "mtb",
         strava_gear_id: str | None = None,
+        user_id: str | None = None,
     ) -> Bike:
         """Add a new bike to the garage.
 
@@ -50,15 +51,16 @@ class BikeGarage:
             model: Bike model name.
             bike_type: Type of bike (mtb, emtb, gravel, road).
             strava_gear_id: Optional Strava gear ID for linking.
+            user_id: Owner user ID.
 
         Returns:
             The newly created Bike.
         """
         bike_id = str(uuid.uuid4())
         await self._db.execute_and_commit(
-            "INSERT INTO bikes (id, name, brand, model, bike_type, total_km, strava_gear_id) "
-            "VALUES (?, ?, ?, ?, ?, 0, ?)",
-            (bike_id, name, brand, model, bike_type, strava_gear_id),
+            "INSERT INTO bikes (id, name, brand, model, bike_type, total_km, strava_gear_id, user_id) "
+            "VALUES (?, ?, ?, ?, ?, 0, ?, ?)",
+            (bike_id, name, brand, model, bike_type, strava_gear_id, user_id),
         )
         logger.info("bike_garage.bike_added", bike_id=bike_id, name=name)
         return Bike(
@@ -71,18 +73,24 @@ class BikeGarage:
             strava_gear_id=strava_gear_id,
         )
 
-    async def get_bike(self, bike_id: str) -> Bike | None:
+    async def get_bike(self, bike_id: str, user_id: str | None = None) -> Bike | None:
         """Get a bike by ID, including its components.
 
         Args:
             bike_id: The bike's UUID.
+            user_id: Owner filter (if set, only return if owned by user).
 
         Returns:
             The Bike with components, or None if not found.
         """
-        row = await self._db.fetch_one(
-            "SELECT * FROM bikes WHERE id = ?", (bike_id,),
-        )
+        if user_id is not None:
+            row = await self._db.fetch_one(
+                "SELECT * FROM bikes WHERE id = ? AND user_id = ?", (bike_id, user_id),
+            )
+        else:
+            row = await self._db.fetch_one(
+                "SELECT * FROM bikes WHERE id = ?", (bike_id,),
+            )
         if row is None:
             return None
 
@@ -98,18 +106,25 @@ class BikeGarage:
             components=components,
         )
 
-    async def get_bike_by_name(self, name: str) -> Bike | None:
+    async def get_bike_by_name(self, name: str, user_id: str | None = None) -> Bike | None:
         """Get a bike by name (case-insensitive).
 
         Args:
             name: The bike name to search for.
+            user_id: Owner filter.
 
         Returns:
             The Bike with components, or None if not found.
         """
-        row = await self._db.fetch_one(
-            "SELECT * FROM bikes WHERE LOWER(name) = LOWER(?)", (name,),
-        )
+        if user_id is not None:
+            row = await self._db.fetch_one(
+                "SELECT * FROM bikes WHERE LOWER(name) = LOWER(?) AND user_id = ?",
+                (name, user_id),
+            )
+        else:
+            row = await self._db.fetch_one(
+                "SELECT * FROM bikes WHERE LOWER(name) = LOWER(?)", (name,),
+            )
         if row is None:
             return None
 
@@ -125,13 +140,21 @@ class BikeGarage:
             components=components,
         )
 
-    async def list_bikes(self) -> list[Bike]:
+    async def list_bikes(self, user_id: str | None = None) -> list[Bike]:
         """List all bikes in the garage.
+
+        Args:
+            user_id: Filter by owner.
 
         Returns:
             A list of all bikes with their components.
         """
-        rows = await self._db.fetch_all("SELECT * FROM bikes ORDER BY name")
+        if user_id is not None:
+            rows = await self._db.fetch_all(
+                "SELECT * FROM bikes WHERE user_id = ? ORDER BY name", (user_id,),
+            )
+        else:
+            rows = await self._db.fetch_all("SELECT * FROM bikes ORDER BY name")
         bikes: list[Bike] = []
         for row in rows:
             components = await self.get_components(row["id"])

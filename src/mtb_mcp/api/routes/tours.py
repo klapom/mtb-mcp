@@ -45,8 +45,6 @@ async def search_tours(
     t = time.monotonic()
     settings = get_cached_settings()
     search_lat, search_lon = resolve_location(lat, lon)
-    search_query = query or f"{search_lat},{search_lon}"
-
     all_results: list[TourSummary] = []
 
     # Search Komoot
@@ -64,16 +62,32 @@ async def search_tours(
             logger.warning("api_search_tours_komoot_error", error=str(exc))
 
     # Search GPS-Tour.info via SearXNG
-    try:
-        async with GPSTourClient(
-            searxng_url=settings.searxng_url,
-            username=settings.gpstour_username,
-            password=settings.gpstour_password,
-        ) as gpstour:
-            gpstour_results = await gpstour.search_tours(query=search_query)
-            all_results.extend(gpstour_results)
-    except Exception as exc:
-        logger.warning("api_search_tours_gpstour_error", error=str(exc))
+    # GPS-Tour needs a text query, not coordinates — reverse-geocode if needed
+    gpstour_query = query
+    if not gpstour_query:
+        try:
+            import httpx
+            resp = await httpx.AsyncClient().get(
+                "https://nominatim.openstreetmap.org/reverse",
+                params={"lat": str(search_lat), "lon": str(search_lon), "format": "json", "zoom": "10"},
+                headers={"User-Agent": "TrailPilot/0.1"},
+            )
+            if resp.status_code == 200:
+                addr = resp.json().get("address", {})
+                gpstour_query = f"mtb {addr.get('city', addr.get('town', addr.get('county', '')))}"
+        except Exception:
+            pass
+    if gpstour_query:
+        try:
+            async with GPSTourClient(
+                searxng_url=settings.searxng_url,
+                username=settings.gpstour_username,
+                password=settings.gpstour_password,
+            ) as gpstour:
+                gpstour_results = await gpstour.search_tours(query=gpstour_query)
+                all_results.extend(gpstour_results)
+        except Exception as exc:
+            logger.warning("api_search_tours_gpstour_error", error=str(exc))
 
     # Filter by difficulty
     diff_filter = _validate_difficulty(difficulty)

@@ -48,6 +48,11 @@ kompy = "^0.0.12"
 fastapi = "^0.115.0"
 uvicorn = {extras = ["standard"], version = "^0.42.0"}
 
+# Auth
+PyJWT = "^2.8"
+bcrypt = "^4.1"
+cryptography = "^42"
+
 # ============================================================================
 # OPTIONAL GROUPS
 # ============================================================================
@@ -102,6 +107,8 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
 "tests/**/*" = ["S101"]
+"src/mtb_mcp/api/**/*" = ["B008"]
+"src/mtb_mcp/auth/**/*" = ["B008"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["mtb_mcp"]
@@ -126,6 +133,8 @@ module = [
     "lxml.*",
     "aiosqlite.*",
     "uvicorn.*",
+    "jwt.*",
+    "bcrypt.*",
 ]
 ignore_missing_imports = true
 

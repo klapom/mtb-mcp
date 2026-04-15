@@ -106,14 +106,24 @@ async def call_tool(tool_name: str, request: Request) -> dict[str, Any]:
 
 
 def main() -> None:
-    port = int(os.environ.get("MTB_MCP_HTTP_PORT", "8205"))
-    host = os.environ.get("MTB_MCP_HTTP_HOST", "0.0.0.0")
-    uvicorn.run(
-        "mtb_mcp.http_server:app",
-        host=host,
-        port=port,
-        log_level=os.environ.get("MTB_MCP_HTTP_LOG_LEVEL", "info"),
-    )
+    import asyncio
+
+    rest_port = int(os.environ.get("LISTEN_PORT", os.environ.get("MTB_MCP_HTTP_PORT", "32620")))
+    mcp_port = int(os.environ.get("MCP_PORT", "33620"))
+    host = os.environ.get("LISTEN_HOST", os.environ.get("MTB_MCP_HTTP_HOST", "0.0.0.0"))
+    log_level = os.environ.get("MTB_MCP_HTTP_LOG_LEVEL", "info")
+
+    mcp_app = mcp.streamable_http_app()
+    rest_cfg = uvicorn.Config(app, host=host, port=rest_port, log_level=log_level)
+    mcp_cfg = uvicorn.Config(mcp_app, host=host, port=mcp_port, log_level=log_level)
+
+    async def _run() -> None:
+        await asyncio.gather(
+            uvicorn.Server(rest_cfg).serve(),
+            uvicorn.Server(mcp_cfg).serve(),
+        )
+
+    asyncio.run(_run())
 
 
 if __name__ == "__main__":

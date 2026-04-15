@@ -1,6 +1,7 @@
 /* Typed API client for TrailPilot FastAPI backend */
 
 import type {
+  AuthUser,
   Bike,
   BikeComponent,
   DashboardData,
@@ -40,10 +41,44 @@ class ApiError extends Error {
 }
 
 async function api<T>(path: string, opts?: RequestInit): Promise<T> {
+  const token = typeof window !== "undefined" ? localStorage.getItem("trailpilot_token") : null;
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
   const resp = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
     ...opts,
+    headers: { ...headers, ...((opts?.headers as Record<string, string>) || {}) },
   });
+
+  // Try refresh on 401
+  if (resp.status === 401 && typeof window !== "undefined") {
+    const refreshToken = localStorage.getItem("trailpilot_refresh_token");
+    if (refreshToken) {
+      try {
+        const refreshResp = await fetch(`${API_BASE}/auth/refresh`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+        const refreshJson = await refreshResp.json();
+        if (refreshJson.status === "ok") {
+          localStorage.setItem("trailpilot_token", refreshJson.data.access_token);
+          headers["Authorization"] = `Bearer ${refreshJson.data.access_token}`;
+          const retryResp = await fetch(`${API_BASE}${path}`, {
+            ...opts,
+            headers: { ...headers, ...((opts?.headers as Record<string, string>) || {}) },
+          });
+          const retryJson = await retryResp.json();
+          if (retryJson.status === "error")
+            throw new ApiError(retryJson.error.code, retryJson.error.message);
+          return retryJson.data as T;
+        }
+      } catch {
+        /* refresh failed, fall through */
+      }
+    }
+  }
+
   const json = await resp.json();
   if (json.status === "error") {
     throw new ApiError(json.error.code, json.error.message);
@@ -155,6 +190,13 @@ export const Safety = {
     }),
   cancelTimer: (timerId: string) =>
     api<{ message: string }>(`/safety/timer/${timerId}`, { method: "DELETE" }),
+};
+
+// ── Auth ──────────────────────────────────────────────────────────
+
+export const Auth = {
+  stravaAuthorize: () => api<{ authorize_url: string }>("/auth/strava/authorize"),
+  me: () => api<AuthUser>("/auth/me"),
 };
 
 export { api, ApiError };

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
+import { AuthProvider } from "@/contexts/AuthContext";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -23,13 +24,15 @@ export default function RootLayout({
   return (
     <html lang="de">
       <body>
-        <Header />
-        <main className="pt-[var(--header-height)] pb-[calc(var(--nav-height)+var(--safe-bottom)+8px)] min-h-dvh">
-          <div className="p-4 max-w-[500px] mx-auto animate-[screenIn_0.3s_ease]">
-            {children}
-          </div>
-        </main>
-        <BottomNav />
+        <AuthProvider>
+          <Header />
+          <main className="pt-[var(--header-height)] pb-[calc(var(--nav-height)+var(--safe-bottom)+8px)] min-h-dvh">
+            <div className="p-4 max-w-[500px] mx-auto animate-[screenIn_0.3s_ease]">
+              {children}
+            </div>
+          </main>
+          <BottomNav />
+        </AuthProvider>
       </body>
     </html>
   );

@@ -20,9 +20,9 @@ def _future_time(hours: int = 3) -> str:
 
 
 @pytest.mark.asyncio
-async def test_set_timer(api_client_with_db: AsyncClient) -> None:
+async def test_set_timer(authed_client: AsyncClient) -> None:
     """POST /api/v1/safety/timer creates an active timer."""
-    resp = await api_client_with_db.post(
+    resp = await authed_client.post(
         "/api/v1/safety/timer",
         json={
             "expected_return_time": _future_time(hours=3),
@@ -43,10 +43,10 @@ async def test_set_timer(api_client_with_db: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_timer(api_client_with_db: AsyncClient) -> None:
+async def test_get_timer(authed_client: AsyncClient) -> None:
     """GET /api/v1/safety/timer returns the active timer after creation."""
     # Create a timer first
-    await api_client_with_db.post(
+    await authed_client.post(
         "/api/v1/safety/timer",
         json={
             "expected_return_time": _future_time(hours=2),
@@ -54,7 +54,7 @@ async def test_get_timer(api_client_with_db: AsyncClient) -> None:
         },
     )
 
-    resp = await api_client_with_db.get("/api/v1/safety/timer")
+    resp = await authed_client.get("/api/v1/safety/timer")
 
     assert resp.status_code == 200
     body = resp.json()
@@ -69,10 +69,10 @@ async def test_get_timer(api_client_with_db: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_cancel_timer(api_client_with_db: AsyncClient) -> None:
+async def test_cancel_timer(authed_client: AsyncClient) -> None:
     """DELETE /api/v1/safety/timer cancels the active timer."""
     # Create a timer
-    create_resp = await api_client_with_db.post(
+    create_resp = await authed_client.post(
         "/api/v1/safety/timer",
         json={
             "expected_return_time": _future_time(hours=4),
@@ -82,7 +82,7 @@ async def test_cancel_timer(api_client_with_db: AsyncClient) -> None:
     timer_id = create_resp.json()["data"]["timer_id"]
 
     # Cancel it
-    resp = await api_client_with_db.delete("/api/v1/safety/timer")
+    resp = await authed_client.delete("/api/v1/safety/timer")
 
     assert resp.status_code == 200
     body = resp.json()
@@ -91,6 +91,6 @@ async def test_cancel_timer(api_client_with_db: AsyncClient) -> None:
     assert body["data"]["status"] == "cancelled"
 
     # Verify GET now shows no active timer
-    check_resp = await api_client_with_db.get("/api/v1/safety/timer")
+    check_resp = await authed_client.get("/api/v1/safety/timer")
     check_body = check_resp.json()
     assert check_body["data"]["active"] is False

@@ -133,11 +133,13 @@ export interface RainHistory {
 export interface Trail {
   osm_id: number;
   name: string;
-  difficulty: string;
+  mtb_scale: string;
+  difficulty?: string;
   surface: string;
   length_m: number;
-  lat: number;
-  lon: number;
+  lat?: number;
+  lon?: number;
+  geometry?: { lat: number; lon: number; ele: number | null }[];
   condition?: TrailCondition;
 }
 
@@ -264,4 +266,31 @@ export interface SafetyTimer {
   started_at: string;
   expires_at: string;
   emergency_contact: string;
+}
+
+// ── Auth ──────────────────────────────────────────────────────────
+
+export interface AuthUser {
+  id: string;
+  email: string | null;
+  display_name: string;
+  avatar_url: string | null;
+  home_lat: number | null;
+  home_lon: number | null;
+  strava_athlete_id: number | null;
+  onboarding_done: boolean;
+  strava_connected?: boolean;
+}
+
+export interface TokenPair {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+}
+
+export interface InviteLink {
+  invite_id: string;
+  token: string;
+  expires_in_days: number;
 }

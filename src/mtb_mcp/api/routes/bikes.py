@@ -5,11 +5,13 @@ import time
 from typing import Any
 
 import structlog
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from mtb_mcp.api.deps import get_cached_settings
 from mtb_mcp.api.models import err, ok, ok_list
+from mtb_mcp.auth.dependencies import get_current_user
+from mtb_mcp.auth.models import User
 from mtb_mcp.intelligence.wear_engine import (
     SERVICE_INTERVALS,
     calculate_effective_km,
@@ -120,13 +122,13 @@ def _bike_to_dict(bike: Any) -> dict[str, Any]:
 
 @router.get("", include_in_schema=False)
 @router.get("/")
-async def list_bikes() -> dict[str, Any]:
+async def list_bikes(user: User = Depends(get_current_user)) -> dict[str, Any]:
     """List all bikes with components and wear status."""
     t = time.monotonic()
     db: Database | None = None
     try:
         db, garage = await _open_garage()
-        bikes = await garage.list_bikes()
+        bikes = await garage.list_bikes(user_id=user.id)
         items = [_bike_to_dict(b) for b in bikes]
         return ok_list(items, total=len(items), start_time=t)
     except Exception as exc:
@@ -138,13 +140,13 @@ async def list_bikes() -> dict[str, Any]:
 
 
 @router.get("/{bike_name}")
-async def get_bike(bike_name: str) -> dict[str, Any]:
+async def get_bike(bike_name: str, user: User = Depends(get_current_user)) -> dict[str, Any]:
     """Get a single bike with all components and wear details."""
     t = time.monotonic()
     db: Database | None = None
     try:
         db, garage = await _open_garage()
-        bike = await garage.get_bike_by_name(bike_name)
+        bike = await garage.get_bike_by_name(bike_name, user_id=user.id)
         if bike is None:
             return err("NOT_FOUND", f"Bike '{bike_name}' not found")
         return ok(_bike_to_dict(bike), t)
@@ -157,7 +159,9 @@ async def get_bike(bike_name: str) -> dict[str, Any]:
 
 
 @router.post("/{bike_name}/components")
-async def add_component(bike_name: str, body: AddComponentRequest) -> dict[str, Any]:
+async def add_component(
+    bike_name: str, body: AddComponentRequest, user: User = Depends(get_current_user),
+) -> dict[str, Any]:
     """Add a component to a bike for wear tracking."""
     t = time.monotonic()
 
@@ -173,9 +177,9 @@ async def add_component(bike_name: str, body: AddComponentRequest) -> dict[str, 
         db, garage = await _open_garage()
 
         # Find bike; create if not found
-        bike = await garage.get_bike_by_name(bike_name)
+        bike = await garage.get_bike_by_name(bike_name, user_id=user.id)
         if bike is None:
-            bike = await garage.add_bike(bike_name)
+            bike = await garage.add_bike(bike_name, user_id=user.id)
 
         component = await garage.add_component(
             bike_id=bike.id,
@@ -205,14 +209,16 @@ async def add_component(bike_name: str, body: AddComponentRequest) -> dict[str, 
 
 
 @router.post("/{bike_name}/rides")
-async def log_ride(bike_name: str, body: LogRideRequest) -> dict[str, Any]:
+async def log_ride(
+    bike_name: str, body: LogRideRequest, user: User = Depends(get_current_user),
+) -> dict[str, Any]:
     """Log a ride — updates bike km and all component wear counters."""
     t = time.monotonic()
     db: Database | None = None
     try:
         db, garage = await _open_garage()
 
-        bike = await garage.get_bike_by_name(bike_name)
+        bike = await garage.get_bike_by_name(bike_name, user_id=user.id)
         if bike is None:
             return err("NOT_FOUND", f"Bike '{bike_name}' not found")
 
@@ -273,14 +279,16 @@ async def log_ride(bike_name: str, body: LogRideRequest) -> dict[str, Any]:
 
 
 @router.get("/{bike_name}/maintenance")
-async def maintenance_status(bike_name: str) -> dict[str, Any]:
+async def maintenance_status(
+    bike_name: str, user: User = Depends(get_current_user),
+) -> dict[str, Any]:
     """Maintenance status for all components — wear %, status, km remaining."""
     t = time.monotonic()
     db: Database | None = None
     try:
         db, garage = await _open_garage()
 
-        bike = await garage.get_bike_by_name(bike_name)
+        bike = await garage.get_bike_by_name(bike_name, user_id=user.id)
         if bike is None:
             return err("NOT_FOUND", f"Bike '{bike_name}' not found")
 
@@ -338,7 +346,9 @@ async def maintenance_status(bike_name: str) -> dict[str, Any]:
 
 
 @router.post("/{bike_name}/service")
-async def log_service(bike_name: str, body: ServiceRequest) -> dict[str, Any]:
+async def log_service(
+    bike_name: str, body: ServiceRequest, user: User = Depends(get_current_user),
+) -> dict[str, Any]:
     """Log a maintenance service — resets wear counters for the component."""
     t = time.monotonic()
 
@@ -361,7 +371,7 @@ async def log_service(bike_name: str, body: ServiceRequest) -> dict[str, Any]:
     try:
         db, garage = await _open_garage()
 
-        bike = await garage.get_bike_by_name(bike_name)
+        bike = await garage.get_bike_by_name(bike_name, user_id=user.id)
         if bike is None:
             return err("NOT_FOUND", f"Bike '{bike_name}' not found")
 

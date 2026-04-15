@@ -7,11 +7,13 @@ from datetime import datetime, timezone
 from typing import Any
 
 import structlog
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from mtb_mcp.api.deps import get_cached_settings
 from mtb_mcp.api.models import err, ok
+from mtb_mcp.auth.dependencies import get_current_user
+from mtb_mcp.auth.models import User
 from mtb_mcp.storage.database import Database
 
 logger = structlog.get_logger(__name__)
@@ -106,7 +108,7 @@ async def _check_strava_for_recent_activity() -> bool:
 # ---------------------------------------------------------------------------
 
 @router.post("/timer")
-async def set_timer(body: SetTimerRequest) -> dict[str, Any]:
+async def set_timer(body: SetTimerRequest, user: User = Depends(get_current_user)) -> dict[str, Any]:
     """Set a safety timer for a ride."""
     t = time.monotonic()
 
@@ -124,15 +126,17 @@ async def set_timer(body: SetTimerRequest) -> dict[str, Any]:
 
         # Deactivate any existing active timers
         await db.execute_and_commit(
-            "UPDATE safety_timers SET status = 'cancelled' WHERE status = 'active'",
+            "UPDATE safety_timers SET status = 'cancelled' WHERE status = 'active' AND user_id = ?",
+            (user.id,),
         )
 
         await db.execute_and_commit(
             """INSERT INTO safety_timers
-               (id, expected_return, ride_description, emergency_contact, created_at, status)
-               VALUES (?, ?, ?, ?, ?, 'active')""",
+               (id, user_id, expected_return, ride_description, emergency_contact, created_at, status)
+               VALUES (?, ?, ?, ?, ?, ?, 'active')""",
             (
                 timer_id,
+                user.id,
                 return_dt.isoformat(),
                 body.ride_description,
                 body.emergency_contact,
@@ -159,7 +163,7 @@ async def set_timer(body: SetTimerRequest) -> dict[str, Any]:
 
 
 @router.get("/timer")
-async def check_timer() -> dict[str, Any]:
+async def check_timer(user: User = Depends(get_current_user)) -> dict[str, Any]:
     """Check active safety timer status."""
     t = time.monotonic()
     db: Database | None = None
@@ -167,8 +171,9 @@ async def check_timer() -> dict[str, Any]:
         db = await _get_db()
 
         timer = await db.fetch_one(
-            "SELECT * FROM safety_timers WHERE status = 'active' "
+            "SELECT * FROM safety_timers WHERE status = 'active' AND user_id = ? "
             "ORDER BY created_at DESC LIMIT 1",
+            (user.id,),
         )
 
         if timer is None:
@@ -236,7 +241,7 @@ async def check_timer() -> dict[str, Any]:
 
 
 @router.delete("/timer")
-async def cancel_timer() -> dict[str, Any]:
+async def cancel_timer(user: User = Depends(get_current_user)) -> dict[str, Any]:
     """Cancel the active safety timer."""
     t = time.monotonic()
     db: Database | None = None
@@ -244,8 +249,9 @@ async def cancel_timer() -> dict[str, Any]:
         db = await _get_db()
 
         timer = await db.fetch_one(
-            "SELECT * FROM safety_timers WHERE status = 'active' "
+            "SELECT * FROM safety_timers WHERE status = 'active' AND user_id = ? "
             "ORDER BY created_at DESC LIMIT 1",
+            (user.id,),
         )
 
         if timer is None:

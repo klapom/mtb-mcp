@@ -23,9 +23,9 @@ def _future_date(weeks: int = 16) -> str:
 
 
 @pytest.mark.asyncio
-async def test_training_status_no_data(api_client_with_db: AsyncClient) -> None:
+async def test_training_status_no_data(authed_client: AsyncClient) -> None:
     """GET /api/v1/training/status returns has_data=False when no snapshots exist."""
-    resp = await api_client_with_db.get("/api/v1/training/status")
+    resp = await authed_client.get("/api/v1/training/status")
 
     assert resp.status_code == 200
     body = resp.json()
@@ -35,10 +35,10 @@ async def test_training_status_no_data(api_client_with_db: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_create_goal(api_client_with_db: AsyncClient) -> None:
+async def test_create_goal(authed_client: AsyncClient) -> None:
     """POST /api/v1/training/goals creates a goal and generates a plan."""
     target = _future_date(weeks=16)
-    resp = await api_client_with_db.post(
+    resp = await authed_client.post(
         "/api/v1/training/goals",
         json={
             "name": "Alpencross 2026",
@@ -62,11 +62,11 @@ async def test_create_goal(api_client_with_db: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_list_goals(api_client_with_db: AsyncClient) -> None:
+async def test_list_goals(authed_client: AsyncClient) -> None:
     """GET /api/v1/training/goals lists created goals."""
     # Create a goal first
     target = _future_date(weeks=12)
-    await api_client_with_db.post(
+    await authed_client.post(
         "/api/v1/training/goals",
         json={
             "name": "XC Race",
@@ -75,7 +75,7 @@ async def test_list_goals(api_client_with_db: AsyncClient) -> None:
         },
     )
 
-    resp = await api_client_with_db.get("/api/v1/training/goals")
+    resp = await authed_client.get("/api/v1/training/goals")
 
     assert resp.status_code == 200
     body = resp.json()
@@ -86,10 +86,10 @@ async def test_list_goals(api_client_with_db: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_training_plan(api_client_with_db: AsyncClient) -> None:
+async def test_training_plan(authed_client: AsyncClient) -> None:
     """GET /api/v1/training/plan returns plan weeks for the active goal."""
     target = _future_date(weeks=14)
-    await api_client_with_db.post(
+    await authed_client.post(
         "/api/v1/training/goals",
         json={
             "name": "Plan Test Goal",
@@ -99,7 +99,7 @@ async def test_training_plan(api_client_with_db: AsyncClient) -> None:
     )
 
     # Use goal_name param to avoid picking up goals from other tests
-    resp = await api_client_with_db.get(
+    resp = await authed_client.get(
         "/api/v1/training/plan", params={"goal_name": "Plan Test Goal"}
     )
 
@@ -119,10 +119,10 @@ async def test_training_plan(api_client_with_db: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_readiness_no_fitness_data(api_client_with_db: AsyncClient) -> None:
+async def test_readiness_no_fitness_data(authed_client: AsyncClient) -> None:
     """GET /api/v1/training/readiness returns NO_DATA when no snapshots exist."""
     target = _future_date(weeks=10)
-    await api_client_with_db.post(
+    await authed_client.post(
         "/api/v1/training/goals",
         json={
             "name": "Readiness Goal",
@@ -131,7 +131,7 @@ async def test_readiness_no_fitness_data(api_client_with_db: AsyncClient) -> Non
         },
     )
 
-    resp = await api_client_with_db.get("/api/v1/training/readiness")
+    resp = await authed_client.get("/api/v1/training/readiness")
 
     assert resp.status_code == 200
     body = resp.json()

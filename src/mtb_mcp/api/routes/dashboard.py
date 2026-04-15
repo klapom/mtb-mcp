@@ -6,10 +6,12 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import structlog
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from mtb_mcp.api.deps import get_cached_settings, resolve_location
 from mtb_mcp.api.models import ok
+from mtb_mcp.auth.dependencies import get_current_user
+from mtb_mcp.auth.models import User
 from mtb_mcp.clients.dwd import DWDClient
 from mtb_mcp.intelligence.ride_score import RideScoreInput, calculate_ride_score
 from mtb_mcp.intelligence.trail_condition import estimate_trail_condition
@@ -27,10 +29,11 @@ async def dashboard(
     lat: float | None = None,
     lon: float | None = None,
     surface: str = "dirt",
+    user: User = Depends(get_current_user),
 ) -> dict[str, Any]:
     """Aggregated dashboard: ride score, weather, trail, weekend preview, service, timer."""
     t = time.monotonic()
-    rlat, rlon = resolve_location(lat, lon)
+    rlat, rlon = resolve_location(lat, lon, user=user)
 
     result: dict[str, Any] = {
         "ride_score": None,
@@ -202,14 +205,14 @@ async def dashboard(
     except Exception as exc:
         logger.warning("dashboard.weekend_preview_error", error=str(exc))
 
-    # --- 5. next_service (most worn component from bike garage) ---
+    # --- 5. next_service (most worn component from user's bikes) ---
     try:
         settings = get_cached_settings()
         db = Database(settings.resolved_db_path)
         await db.initialize()
         try:
             garage = BikeGarage(db)
-            bikes = await garage.list_bikes()
+            bikes = await garage.list_bikes(user_id=user.id)
 
             most_worn: dict[str, Any] | None = None
             highest_pct = -1.0
@@ -249,15 +252,16 @@ async def dashboard(
     except Exception as exc:
         logger.warning("dashboard.next_service_error", error=str(exc))
 
-    # --- 6. active_timer (from safety_timers table) ---
+    # --- 6. active_timer (user's timer from safety_timers table) ---
     try:
         settings = get_cached_settings()
         db = Database(settings.resolved_db_path)
         await db.initialize()
         try:
             timer = await db.fetch_one(
-                "SELECT * FROM safety_timers WHERE status = 'active' "
+                "SELECT * FROM safety_timers WHERE status = 'active' AND user_id = ? "
                 "ORDER BY created_at DESC LIMIT 1",
+                (user.id,),
             )
             if timer is not None:
                 expected_return = datetime.fromisoformat(str(timer["expected_return"]))
