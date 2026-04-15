@@ -113,6 +113,11 @@ def main() -> None:
     host = os.environ.get("LISTEN_HOST", os.environ.get("MTB_MCP_HTTP_HOST", "0.0.0.0"))
     log_level = os.environ.get("MTB_MCP_HTTP_LOG_LEVEL", "info")
 
+    # Disable DNS rebinding protection — we're behind CF Access / LAN only.
+    from mcp.server.transport_security import TransportSecuritySettings
+    mcp.settings.transport_security = TransportSecuritySettings(
+        enable_dns_rebinding_protection=False,
+    )
     mcp_app = mcp.streamable_http_app()
     rest_cfg = uvicorn.Config(app, host=host, port=rest_port, log_level=log_level)
     mcp_cfg = uvicorn.Config(mcp_app, host=host, port=mcp_port, log_level=log_level)
