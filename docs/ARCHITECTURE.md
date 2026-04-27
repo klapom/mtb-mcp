@@ -92,4 +92,4 @@ search_tours tool → Komoot client (search)
 | Service | Port | Purpose |
 |---------|------|---------|
 | BRouter | 17777 | MTB-optimized routing |
-| SearXNG | 17888 | Meta-search for GPS-Tour.info |
+| SearXNG | 8888 | Meta-search for GPS-Tour.info (shared instance, `projects/searxng/`) |

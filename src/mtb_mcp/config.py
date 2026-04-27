@@ -49,7 +49,7 @@ class Settings(BaseSettings):
     brouter_url: str = "http://localhost:17777"
 
     # SearXNG
-    searxng_url: str = "http://localhost:17888"
+    searxng_url: str = "http://localhost:8888"
 
     # DWD (no auth needed)
     dwd_base_url: str = "https://opendata.dwd.de"

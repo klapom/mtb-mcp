@@ -89,7 +89,7 @@ class GPSTourClient(BaseClient):
 
     def __init__(
         self,
-        searxng_url: str = "http://localhost:17888",
+        searxng_url: str = "http://localhost:8888",
         username: str | None = None,
         password: str | None = None,
     ) -> None:

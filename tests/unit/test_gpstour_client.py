@@ -112,7 +112,7 @@ class TestGPSTourClientInit:
         """Should initialize with default settings."""
         client = GPSTourClient()
         assert client._base_url == "https://www.gps-tour.info"
-        assert client._searxng_url == "http://localhost:17888"
+        assert client._searxng_url == "http://localhost:8888"
         assert client._username is None
         assert client._password is None
         assert client._session_cookie is None
@@ -147,7 +147,7 @@ class TestGPSTourClientSearch:
     async def test_search_tours(self) -> None:
         """Should search via SearXNG and parse results."""
         fixture = _load_json_fixture("searxng_gpstour.json")
-        respx.get("http://localhost:17888/search").mock(
+        respx.get("http://localhost:8888/search").mock(
             return_value=httpx.Response(200, json=fixture)
         )
 
@@ -165,7 +165,7 @@ class TestGPSTourClientSearch:
     async def test_search_filters_non_gpstour(self) -> None:
         """Should skip results not from GPS-Tour.info."""
         fixture = _load_json_fixture("searxng_gpstour.json")
-        respx.get("http://localhost:17888/search").mock(
+        respx.get("http://localhost:8888/search").mock(
             return_value=httpx.Response(200, json=fixture)
         )
 
@@ -179,7 +179,7 @@ class TestGPSTourClientSearch:
     @respx.mock
     async def test_search_searxng_error(self) -> None:
         """Should return empty list on SearXNG error."""
-        respx.get("http://localhost:17888/search").mock(
+        respx.get("http://localhost:8888/search").mock(
             return_value=httpx.Response(500, json={"error": "internal"})
         )
 
@@ -191,7 +191,7 @@ class TestGPSTourClientSearch:
     @respx.mock
     async def test_search_empty_results(self) -> None:
         """Should handle empty search results."""
-        respx.get("http://localhost:17888/search").mock(
+        respx.get("http://localhost:8888/search").mock(
             return_value=httpx.Response(200, json={"results": []})
         )
 

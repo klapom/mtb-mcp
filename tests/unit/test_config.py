@@ -12,7 +12,7 @@ class TestSettings:
 
     def test_default_values(self) -> None:
         """Settings should have sensible defaults."""
-        s = Settings()
+        s = Settings(_env_file=None)
         assert s.log_level == "INFO"
         assert s.data_dir == Path("~/.mtb-mcp")
         assert s.db_path == Path("~/.mtb-mcp/mtb.db")
@@ -36,7 +36,7 @@ class TestSettings:
 
     def test_optional_api_keys_default_none(self) -> None:
         """Optional API keys should default to None."""
-        s = Settings()
+        s = Settings(_env_file=None)
         assert s.strava_client_id is None
         assert s.strava_client_secret is None
         assert s.komoot_email is None
@@ -48,7 +48,7 @@ class TestSettings:
         """Service URLs should have sensible defaults."""
         s = Settings()
         assert s.brouter_url == "http://localhost:17777"
-        assert s.searxng_url == "http://localhost:17888"
+        assert s.searxng_url == "http://localhost:8888"
         assert "opendata.dwd.de" in s.dwd_base_url
         assert "overpass-api.de" in s.overpass_url
 

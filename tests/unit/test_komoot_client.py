@@ -161,7 +161,7 @@ class TestKomootClientAuth:
     async def test_successful_auth(self) -> None:
         """Should authenticate and extract user_id."""
         fixture = _load_fixture("komoot_login.json")
-        respx.get("https://api.komoot.de/v006/account/email/rider@example.com").mock(
+        respx.get("https://api.komoot.de/v006/account/email/rider@example.com/").mock(
             return_value=httpx.Response(200, json=fixture)
         )
 
@@ -177,7 +177,7 @@ class TestKomootClientAuth:
     @respx.mock
     async def test_auth_failure_401(self) -> None:
         """Should handle 401 unauthorized."""
-        respx.get("https://api.komoot.de/v006/account/email/bad@example.com").mock(
+        respx.get("https://api.komoot.de/v006/account/email/bad@example.com/").mock(
             return_value=httpx.Response(401, json={"error": "unauthorized"})
         )
 
@@ -216,7 +216,7 @@ class TestKomootClientSearch:
         login_fixture = _load_fixture("komoot_login.json")
         tours_fixture = _load_fixture("komoot_tours.json")
 
-        respx.get("https://api.komoot.de/v006/account/email/rider@example.com").mock(
+        respx.get("https://api.komoot.de/v006/account/email/rider@example.com/").mock(
             return_value=httpx.Response(200, json=login_fixture)
         )
         respx.get("https://api.komoot.de/v007/users/123456789/tours/").mock(
@@ -237,7 +237,7 @@ class TestKomootClientSearch:
     @respx.mock
     async def test_search_without_auth(self) -> None:
         """Should return empty list if auth fails."""
-        respx.get("https://api.komoot.de/v006/account/email/bad@example.com").mock(
+        respx.get("https://api.komoot.de/v006/account/email/bad@example.com/").mock(
             return_value=httpx.Response(401, json={"error": "unauthorized"})
         )
 
@@ -256,7 +256,7 @@ class TestKomootClientDetail:
         login_fixture = _load_fixture("komoot_login.json")
         detail_fixture = _load_fixture("komoot_tour_detail.json")
 
-        respx.get("https://api.komoot.de/v006/account/email/rider@example.com").mock(
+        respx.get("https://api.komoot.de/v006/account/email/rider@example.com/").mock(
             return_value=httpx.Response(200, json=login_fixture)
         )
         respx.get("https://api.komoot.de/v007/tours/1001").mock(
@@ -280,7 +280,7 @@ class TestKomootClientDetail:
         """Should return None for non-existent tour."""
         login_fixture = _load_fixture("komoot_login.json")
 
-        respx.get("https://api.komoot.de/v006/account/email/rider@example.com").mock(
+        respx.get("https://api.komoot.de/v006/account/email/rider@example.com/").mock(
             return_value=httpx.Response(200, json=login_fixture)
         )
         respx.get("https://api.komoot.de/v007/tours/99999").mock(
@@ -304,7 +304,7 @@ class TestKomootClientGPX:
         login_fixture = _load_fixture("komoot_login.json")
         gpx_content = b'<?xml version="1.0"?><gpx><trk><name>Test</name></trk></gpx>'
 
-        respx.get("https://api.komoot.de/v006/account/email/rider@example.com").mock(
+        respx.get("https://api.komoot.de/v006/account/email/rider@example.com/").mock(
             return_value=httpx.Response(200, json=login_fixture)
         )
         respx.get("https://api.komoot.de/v007/tours/1001.gpx").mock(

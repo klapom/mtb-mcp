@@ -108,7 +108,7 @@ class KomootClient(BaseClient):
     """
 
     def __init__(self, email: str | None = None, password: str | None = None,
-                 searxng_url: str = "http://localhost:17888") -> None:
+                 searxng_url: str = "http://localhost:8888") -> None:
         super().__init__(
             base_url="https://api.komoot.de",
             rate_limit=2.0,
@@ -248,7 +248,7 @@ class KomootClient(BaseClient):
         lon: float,
         sport_type: str = "mtb",
         limit: int = 20,
-        searxng_url: str = "http://localhost:17888",
+        searxng_url: str = "http://localhost:8888",
     ) -> list[TourSummary]:
         """Discover public tours by finding and scraping Komoot Guide pages.
 

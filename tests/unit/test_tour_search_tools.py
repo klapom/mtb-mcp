@@ -132,13 +132,13 @@ class TestSearchTours:
         settings.home_lon = 11.00
         settings.komoot_email = "rider@example.com"
         settings.komoot_password = "secret"
-        settings.searxng_url = "http://localhost:17888"
+        settings.searxng_url = "http://localhost:8888"
         settings.gpstour_username = None
         settings.gpstour_password = None
 
         # Mock Komoot auth
         login_fixture = _load_fixture("komoot_login.json")
-        respx.get("https://api.komoot.de/v006/account/email/rider@example.com").mock(
+        respx.get("https://api.komoot.de/v006/account/email/rider@example.com/").mock(
             return_value=httpx.Response(200, json=login_fixture)
         )
 
@@ -150,7 +150,7 @@ class TestSearchTours:
 
         # Mock SearXNG search
         searxng_fixture = _load_fixture("searxng_gpstour.json")
-        respx.get("http://localhost:17888/search").mock(
+        respx.get("http://localhost:8888/search").mock(
             return_value=httpx.Response(200, json=searxng_fixture)
         )
 
@@ -172,13 +172,13 @@ class TestSearchTours:
         settings.home_lon = 11.00
         settings.komoot_email = None
         settings.komoot_password = None
-        settings.searxng_url = "http://localhost:17888"
+        settings.searxng_url = "http://localhost:8888"
         settings.gpstour_username = None
         settings.gpstour_password = None
 
         # Mock SearXNG search
         searxng_fixture = _load_fixture("searxng_gpstour.json")
-        respx.get("http://localhost:17888/search").mock(
+        respx.get("http://localhost:8888/search").mock(
             return_value=httpx.Response(200, json=searxng_fixture)
         )
 
@@ -196,11 +196,11 @@ class TestSearchTours:
         settings.home_lon = 11.00
         settings.komoot_email = None
         settings.komoot_password = None
-        settings.searxng_url = "http://localhost:17888"
+        settings.searxng_url = "http://localhost:8888"
         settings.gpstour_username = None
         settings.gpstour_password = None
 
-        respx.get("http://localhost:17888/search").mock(
+        respx.get("http://localhost:8888/search").mock(
             return_value=httpx.Response(200, json={"results": []})
         )
 
@@ -218,11 +218,11 @@ class TestSearchTours:
         settings.home_lon = 11.00
         settings.komoot_email = None
         settings.komoot_password = None
-        settings.searxng_url = "http://localhost:17888"
+        settings.searxng_url = "http://localhost:8888"
         settings.gpstour_username = None
         settings.gpstour_password = None
 
-        respx.get("http://localhost:17888/search").mock(
+        respx.get("http://localhost:8888/search").mock(
             return_value=httpx.Response(200, json={"results": []})
         )
 
@@ -255,7 +255,7 @@ class TestKomootTourDetails:
         login_fixture = _load_fixture("komoot_login.json")
         detail_fixture = _load_fixture("komoot_tour_detail.json")
 
-        respx.get("https://api.komoot.de/v006/account/email/rider@example.com").mock(
+        respx.get("https://api.komoot.de/v006/account/email/rider@example.com/").mock(
             return_value=httpx.Response(200, json=login_fixture)
         )
         respx.get("https://api.komoot.de/v007/tours/1001").mock(
@@ -290,7 +290,7 @@ class TestGPSTourDetails:
     async def test_successful_detail(self, mock_settings: AsyncMock) -> None:
         """Should return formatted tour details."""
         settings = mock_settings.return_value
-        settings.searxng_url = "http://localhost:17888"
+        settings.searxng_url = "http://localhost:8888"
         settings.gpstour_username = None
         settings.gpstour_password = None
 

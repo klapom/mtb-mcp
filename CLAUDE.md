@@ -38,7 +38,7 @@ Models: Pydantic v2 + pydantic-settings
 Storage: SQLite via aiosqlite (~/.mtb-mcp/mtb.db)
 Auth: PyJWT (HS256) + bcrypt + Fernet (token encryption)
 Logging: structlog
-Docker: BRouter (17777) + SearXNG (17888)
+Docker: BRouter (17777). SearXNG: shared instance on :8888 (siehe `projects/searxng/`)
 Testing: pytest + respx (httpx mocking)
 Quality: Ruff + MyPy (strict)
 
@@ -193,7 +193,7 @@ MTB_MCP_STRAVA_CLIENT_SECRET=
 MTB_MCP_KOMOOT_EMAIL=        # Komoot Basic Auth
 MTB_MCP_ORS_API_KEY=         # OpenRouteService
 MTB_MCP_BROUTER_URL=http://localhost:17777
-MTB_MCP_SEARXNG_URL=http://localhost:17888
+MTB_MCP_SEARXNG_URL=http://localhost:8888
 ```
 
 See `.env.template` for all variables.

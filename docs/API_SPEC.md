@@ -1191,7 +1191,7 @@ Aktuelle Server-Konfiguration (nur nicht-sensitive Werte).
     "gpstour": {"configured": true},
     "ors": {"configured": true},
     "brouter": {"available": false},
-    "searxng": {"available": true, "url": "http://localhost:17888"},
+    "searxng": {"available": true, "url": "http://localhost:8888"},
     "intervals_icu": {"configured": false}
   }
 }

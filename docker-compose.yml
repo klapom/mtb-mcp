@@ -1,22 +1,18 @@
-services:
-  # BRouter: Kein ARM64 Image verfügbar, ORS als primärer Router
-  # Falls x86: image ghcr.io/abrensch/brouter, port 17777
-  # brouter:
-  #   image: ghcr.io/abrensch/brouter
-  #   container_name: mtb-brouter
-  #   ports: ["17777:17777"]
-  #   volumes: [brouter-data:/brouter/misc/segments4]
-  #   environment: [JAVA_OPTS=-Xmx512m]
-  #   restart: unless-stopped
-
-  searxng:
-    image: searxng/searxng:latest
-    container_name: mtb-searxng
-    ports:
-      - "17888:8080"
-    volumes:
-      - ./config/searxng/settings.yml:/etc/searxng/settings.yml:ro
-    restart: unless-stopped
-
-volumes:
-  brouter-data:
+# mtb-mcp lokale Infrastruktur
+#
+# Aktuell keine eigenen Container nötig:
+# - SearXNG: shared instance unter projects/searxng/ auf Port 8888
+#   mtb-mcp übergibt engines=google,bing,duckduckgo per Request-Param.
+# - BRouter: kein ARM64-Image verfügbar; ORS wird als Router verwendet.
+#
+# Falls BRouter wieder aufgesetzt werden soll (x86):
+#   services:
+#     brouter:
+#       image: ghcr.io/abrensch/brouter
+#       container_name: mtb-brouter
+#       ports: ["17777:17777"]
+#       volumes: [brouter-data:/brouter/misc/segments4]
+#       environment: [JAVA_OPTS=-Xmx512m]
+#       restart: unless-stopped
+#   volumes:
+#     brouter-data:

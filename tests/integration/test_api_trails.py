@@ -63,8 +63,10 @@ async def test_list_trails(api_client: AsyncClient) -> None:
     assert body["status"] == "ok"
     assert body["total"] == 2
     assert len(body["data"]) == 2
-    assert body["data"][0]["osm_id"] == 12345
-    assert body["data"][0]["name"] == "Flowtrail Erlangen"
+    # Route sorts by length_m descending; Rosskopf Loop (5100m) > Flowtrail (3200m)
+    assert body["data"][0]["osm_id"] == 67890
+    assert body["data"][0]["name"] == "Rosskopf Loop"
+    assert body["data"][1]["osm_id"] == 12345
 
 
 @pytest.mark.asyncio

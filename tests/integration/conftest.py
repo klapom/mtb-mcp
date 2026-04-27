@@ -64,7 +64,7 @@ def _make_test_settings(tmp_path: Path) -> Settings:
         jwt_secret=_TEST_JWT_SECRET,
         komoot_email="test@example.com",
         komoot_password="secret",
-        searxng_url="http://localhost:17888",
+        searxng_url="http://localhost:8888",
         strava_access_token=None,
     )
 
